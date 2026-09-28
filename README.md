@@ -12,6 +12,8 @@ A small local viewer for the [CursorBench](https://cursor.com/cursorbench) leade
 
 Every effort level listed on CursorBench (Minimal → Max) appears as its own point, and each model's points are connected into one line.
 
+![Demo: score vs. cost per task for five coding CLIs](docs/demo.png)
+
 **GPT upgrade rule:** Codex starts with GPT-5.6 Sol and Terra. When the leaderboard lists GPT-6 Astra, Sol, or Terra, each one replaces its same-named 5.6 entry automatically. No code change is needed.
 
 ## Quick start
