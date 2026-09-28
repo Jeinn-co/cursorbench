@@ -14,6 +14,14 @@ Every effort level listed on CursorBench (Minimal → Max) appears as its own po
 
 ![Demo: score vs. cost per task for five coding CLIs](docs/demo.png)
 
+Hovering a point spotlights that model: the other lines fade, a crosshair marks its score and cost, and a tooltip shows the details.
+
+![Demo: hover spotlights one model and dims the rest](docs/demo-hover.png)
+
+Clicking a legend chip shows or hides that CLI. Here only Codex is visible, comparing GPT-5.6 Sol vs Terra across effort levels.
+
+![Demo: legend chips filter the chart to one CLI](docs/demo-filter.png)
+
 **GPT upgrade rule:** Codex starts with GPT-5.6 Sol and Terra. When the leaderboard lists GPT-6 Astra, Sol, or Terra, each one replaces its same-named 5.6 entry automatically. No code change is needed.
 
 ## Quick start
