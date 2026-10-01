@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react"
-import { PROVIDERS, modelLine, seriesColor, type ProviderId, type Row } from "./bench"
+import { PROVIDERS, compareModels, modelLine, seriesColor, type ProviderId, type Row } from "./bench"
+import { LOGO_PATHS } from "./logos"
 
 type Props = {
   rows: Row[]
@@ -10,24 +11,16 @@ type Props = {
   onSetModels: (models: readonly string[], visible: boolean) => void
 }
 
-// Menu order: by line first (Fable, Opus, Sonnet; GPT Astra, Sol, Terra, Luna; Grok, Grok
-// Build; Muse Spark, Glimmer; Gemini Argon, Flash, Flash-Lite, Pro), then newest version
-// first within a line. Pro comes last for Gemini so both Gemini 3.1 models sit at the
-// bottom. The order does not reshuffle when scores move.
-const LINE_ORDER = [
-  "Fable", "Opus", "Sonnet",
-  "Astra", "Sol", "Terra", "Luna",
-  "Grok", "Grok Build",
-  "Muse Spark", "Muse Glimmer",
-  "Gemini Argon", "Gemini Flash", "Gemini Flash-Lite", "Gemini Pro Preview",
-]
-
-const rank = (line: string) => (LINE_ORDER.includes(line) ? LINE_ORDER.indexOf(line) : LINE_ORDER.length)
-
-function compareModels(a: string, b: string) {
-  const x = modelLine(a)
-  const y = modelLine(b)
-  return rank(x.line) - rank(y.line) || x.line.localeCompare(y.line) || y.version - x.version || b.localeCompare(a)
+// Consecutive models of one line, under a title: "GPT Sol" for Codex lines, else the line name.
+function groupsOf(models: { model: string; points: number }[]) {
+  const groups: { line: string; title: string; items: { model: string; points: number }[] }[] = []
+  for (const item of models) {
+    const { line } = modelLine(item.model)
+    const last = groups[groups.length - 1]
+    if (last && last.line === line) last.items.push(item)
+    else groups.push({ line, title: item.model.startsWith("GPT-") ? `GPT ${line}` : line, items: [item] })
+  }
+  return groups
 }
 
 // Models of one provider in menu order, with how many points each has.
@@ -80,7 +73,9 @@ export default function Legend({ rows, previous, hiddenProviders, hiddenModels, 
               aria-pressed={!off}
               onClick={() => onToggleProvider(provider.id)}
             >
-              <span className="swatch" style={{ background: provider.color }} />
+              <svg className="logo" viewBox="0 0 24 24" aria-hidden="true">
+                <path d={LOGO_PATHS[provider.id]} fill={provider.color} fillRule="evenodd" clipRule="evenodd" />
+              </svg>
               {provider.name}
               <span className="count">{shownPoints === total ? total : `${shownPoints}/${total}`}</span>
             </button>
@@ -107,21 +102,41 @@ export default function Legend({ rows, previous, hiddenProviders, hiddenModels, 
                   />
                   All models
                 </label>
-                {models.map((item) => (
-                  <label key={item.model} className="menu-row">
-                    <input
-                      type="checkbox"
-                      checked={!hiddenModels.has(item.model)}
-                      onChange={(event) => onSetModels([item.model], event.target.checked)}
-                    />
-                    <span
-                      className="swatch"
-                      style={{ background: seriesColor(item.model, provider.id, previous.get(item.model)) }}
-                    />
-                    <span className="menu-name">{item.model}</span>
-                    <span className="count">{item.points}</span>
-                  </label>
-                ))}
+                {groupsOf(models).map((group) => {
+                  const groupShown = group.items.filter((item) => !hiddenModels.has(item.model)).length
+                  return (
+                    <div key={group.line} className="menu-group" role="group" aria-label={group.title}>
+                      {group.items.length > 1 || groupsOf(models).length > 1 ? (
+                        <label className="menu-row menu-group-title">
+                          <input
+                            type="checkbox"
+                            checked={groupShown === group.items.length}
+                            ref={(input) => {
+                              if (input) input.indeterminate = groupShown > 0 && groupShown < group.items.length
+                            }}
+                            onChange={(event) => onSetModels(group.items.map((item) => item.model), event.target.checked)}
+                          />
+                          {group.title}
+                        </label>
+                      ) : null}
+                      {group.items.map((item) => (
+                        <label key={item.model} className="menu-row menu-item">
+                          <input
+                            type="checkbox"
+                            checked={!hiddenModels.has(item.model)}
+                            onChange={(event) => onSetModels([item.model], event.target.checked)}
+                          />
+                          <span
+                            className="swatch"
+                            style={{ background: seriesColor(item.model, provider.id, previous.get(item.model)) }}
+                          />
+                          <span className="menu-name">{item.model}</span>
+                          <span className="count">{item.points}</span>
+                        </label>
+                      ))}
+                    </div>
+                  )
+                })}
               </div>
             ) : null}
           </div>

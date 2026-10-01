@@ -15,11 +15,15 @@ export const PROVIDERS: readonly {
   name: string
   color: string
 }[] = [
-  { id: "claude", name: "Claude Code", color: "#c4552a" },
-  { id: "codex", name: "Codex", color: "#0c8f72" },
-  { id: "grok", name: "Grok", color: "#1a1a1a" },
-  { id: "muse", name: "Muse", color: "#5b4db7" },
-  { id: "gemini", name: "Gemini", color: "#1a73c7" },
+  // Official colours that do not clash with each other: Claude #D97757 (product and
+  // company), OpenAI green #10A37F (Codex's own mark is blue-violet, which would clash),
+  // xAI black, Meta AI violet #9553FF (Meta's corporate blue would clash with Gemini),
+  // Gemini blue #3186FF (from the Gemini mark).
+  { id: "claude", name: "Claude Code", color: "#d97757" },
+  { id: "codex", name: "Codex", color: "#10a37f" },
+  { id: "grok", name: "Grok", color: "#000000" },
+  { id: "muse", name: "Muse", color: "#9553ff" },
+  { id: "gemini", name: "Gemini", color: "#3186ff" },
 ]
 
 export type SourceId = "cursorbench" | "aa"
@@ -28,14 +32,6 @@ export const SOURCES: Record<
   SourceId,
   { id: SourceId; name: string; eyebrow: string; url: string; unit: string; scoreName: string }
 > = {
-  cursorbench: {
-    id: "cursorbench",
-    name: "CursorBench",
-    eyebrow: "CursorBench 4.0",
-    url: "https://cursor.com/cursorbench",
-    unit: "%",
-    scoreName: "CursorBench 4.0 score",
-  },
   aa: {
     id: "aa",
     name: "Artificial Analysis",
@@ -44,9 +40,17 @@ export const SOURCES: Record<
     unit: "",
     scoreName: "Artificial Analysis Intelligence Index",
   },
+  cursorbench: {
+    id: "cursorbench",
+    name: "CursorBench",
+    eyebrow: "CursorBench 4.0",
+    url: "https://cursor.com/cursorbench",
+    unit: "%",
+    scoreName: "CursorBench 4.0 score",
+  },
 }
 
-export const APP_VERSION = "1.8.1"
+export const APP_VERSION = "1.9.0"
 
 export function providerById(id: ProviderId) {
   const found = PROVIDERS.find((item) => item.id === id)
@@ -89,11 +93,11 @@ export function previousGenerations(models: readonly string[]) {
 // One hue per CLI (its chip colour), one shade per line within it: darkest for the
 // flagship line, lightest for the small one. A colour tells you the CLI at a glance.
 const LINE_COLOR: Record<string, string> = {
-  Fable: "#8a3a1c", Opus: "#c4552a", Sonnet: "#e08a5a",
-  Astra: "#0a5c4a", Sol: "#0c8f72", Terra: "#3fb08f", Luna: "#86cfb4",
-  Grok: "#1a1a1a", "Grok Build": "#6b6b6b",
-  "Muse Spark": "#5b4db7", "Muse Glimmer": "#9d92e3",
-  "Gemini Argon": "#0b3d91", "Gemini Pro Preview": "#3b5bd9", "Gemini Flash": "#1a73c7", "Gemini Flash-Lite": "#6eaaf0",
+  Fable: "#a8492a", Opus: "#d97757", Sonnet: "#eaa284",
+  Astra: "#0a6e56", Sol: "#10a37f", Terra: "#45c39f", Luna: "#93dcc4",
+  Grok: "#000000", "Grok Build": "#6b6b6b",
+  "Muse Spark": "#9553ff", "Muse Glimmer": "#c3a3ff",
+  "Gemini Argon": "#1554c7", "Gemini Pro Preview": "#1f6ae6", "Gemini Flash": "#3186ff", "Gemini Flash-Lite": "#8dbcff",
 }
 
 // Share of white mixed in per step behind the newest version of a line: the older, the
@@ -150,4 +154,45 @@ export function tickValues(min: number, max: number, count: number) {
     ticks.push(Number(value.toFixed(6)))
   }
   return ticks
+}
+
+// Menu order: by line first (Fable, Opus, Sonnet; GPT Astra, Sol, Terra, Luna; Grok, Grok
+// Build; Muse Spark, Glimmer; Gemini Argon, Flash, Flash-Lite, Pro), then newest version
+// first within a line. Pro comes last for Gemini so both Gemini 3.1 models sit at the
+// bottom. The order does not reshuffle when scores move.
+const LINE_ORDER = [
+  "Fable", "Opus", "Sonnet",
+  "Astra", "Sol", "Terra", "Luna",
+  "Grok", "Grok Build",
+  "Muse Spark", "Muse Glimmer",
+  "Gemini Argon", "Gemini Flash", "Gemini Flash-Lite", "Gemini Pro Preview",
+]
+
+const rank = (line: string) => (LINE_ORDER.includes(line) ? LINE_ORDER.indexOf(line) : LINE_ORDER.length)
+
+export function compareModels(a: string, b: string) {
+  const x = modelLine(a)
+  const y = modelLine(b)
+  return rank(x.line) - rank(y.line) || x.line.localeCompare(y.line) || y.version - x.version || b.localeCompare(a)
+}
+
+// Ticked the first time a source shows a model: the model each CLI is mostly run with.
+// A CLI with none of these in a source (CursorBench has no GPT-6.1 Sol) gets the first
+// model of its menu instead. Models that appear later start unticked.
+export const DEFAULT_TICKED = new Set(["Opus 5.5", "GPT-6.1 Sol", "Grok 4.7", "Muse Spark 1.3", "Gemini 3.8 Flash"])
+
+export function defaultTicked(rows: readonly Row[]) {
+  const byProvider = new Map<ProviderId, string[]>()
+  for (const row of rows) {
+    const models = byProvider.get(row.provider) ?? []
+    if (!models.includes(row.model)) models.push(row.model)
+    byProvider.set(row.provider, models)
+  }
+  const ticked = new Set<string>()
+  for (const models of byProvider.values()) {
+    const preferred = models.filter((model) => DEFAULT_TICKED.has(model))
+    if (preferred.length > 0) preferred.forEach((model) => ticked.add(model))
+    else ticked.add([...models].sort(compareModels)[0])
+  }
+  return ticked
 }

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react"
 import {
   APP_VERSION,
   SOURCES,
+  defaultTicked,
   previousGenerations,
   type ProviderId,
   type Row,
@@ -11,28 +12,42 @@ import Chart from "./Chart"
 import Legend from "./Legend"
 
 function initialSource(): SourceId {
-  return new URLSearchParams(window.location.search).get("source") === "aa" ? "aa" : "cursorbench"
+  return new URLSearchParams(window.location.search).get("source") === "cursorbench" ? "cursorbench" : "aa"
 }
 
-// The chip switches and the menu ticks are remembered in this browser only. Storage
-// can be missing or blocked (private window, preview), so every access is guarded.
-const STORAGE_KEY = "cursorbench:visibility"
+// Chip switches and menu ticks are remembered in this browser only. Ticks are kept per
+// source, since the two list different models; `seen` marks the models already given a
+// default, so a model that shows up later starts unticked. Storage can be missing or
+// blocked (private window, preview), so every access is guarded.
+const STORAGE_KEY = "cursorbench:visibility:v2"
 
-function loadVisibility(): { providers: string[]; models: string[] } {
+type Ticks = { hidden: ReadonlySet<string>; seen: ReadonlySet<string> }
+type PerSource = Record<SourceId, Ticks>
+
+const EMPTY: Ticks = { hidden: new Set(), seen: new Set() }
+
+function loadVisibility(): { providers: ProviderId[]; perSource: PerSource } {
+  const perSource: PerSource = { aa: EMPTY, cursorbench: EMPTY }
   try {
     const data = JSON.parse(window.localStorage.getItem(STORAGE_KEY) ?? "{}")
-    return {
-      providers: Array.isArray(data.providers) ? data.providers : [],
-      models: Array.isArray(data.models) ? data.models : [],
+    for (const id of Object.keys(perSource) as SourceId[]) {
+      const saved = data.sources?.[id]
+      if (Array.isArray(saved?.hidden) && Array.isArray(saved?.seen)) {
+        perSource[id] = { hidden: new Set(saved.hidden), seen: new Set(saved.seen) }
+      }
     }
+    return { providers: Array.isArray(data.providers) ? data.providers : [], perSource }
   } catch {
-    return { providers: [], models: [] }
+    return { providers: [], perSource }
   }
 }
 
-function saveVisibility(providers: ReadonlySet<ProviderId>, models: ReadonlySet<string>) {
+function saveVisibility(providers: ReadonlySet<ProviderId>, perSource: PerSource) {
   try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ providers: [...providers], models: [...models] }))
+    const sources = Object.fromEntries(
+      Object.entries(perSource).map(([id, ticks]) => [id, { hidden: [...ticks.hidden], seen: [...ticks.seen] }]),
+    )
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ providers: [...providers], sources }))
   } catch {
     // Not remembered this time; the page still works.
   }
@@ -40,13 +55,15 @@ function saveVisibility(providers: ReadonlySet<ProviderId>, models: ReadonlySet<
 
 export default function App() {
   const [source, setSource] = useState<SourceId>(initialSource)
-  const [hidden, setHidden] = useState<ReadonlySet<ProviderId>>(
-    () => new Set(loadVisibility().providers as ProviderId[]),
-  )
-  const [hiddenModels, setHiddenModels] = useState<ReadonlySet<string>>(() => new Set(loadVisibility().models))
+  const [hidden, setHidden] = useState<ReadonlySet<ProviderId>>(() => new Set(loadVisibility().providers))
+  const [perSource, setPerSource] = useState<PerSource>(() => loadVisibility().perSource)
+  const hiddenModels = perSource[source].hidden
 
-  useEffect(() => saveVisibility(hidden, hiddenModels), [hidden, hiddenModels])
+  useEffect(() => saveVisibility(hidden, perSource), [hidden, perSource])
   const [rows, setRows] = useState<Row[]>([])
+  // The source `rows` came from: right after a switch the old source's rows are still on
+  // screen, and defaults must not be worked out from them.
+  const [rowsSource, setRowsSource] = useState<SourceId | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [hover, setHover] = useState<string | null>(null)
   const [pinned, setPinned] = useState<string | null>(null)
@@ -60,6 +77,7 @@ export default function App() {
         const body = (await response.json()) as { rows?: Row[]; changed?: boolean; error?: string }
         if (!response.ok || !body.rows?.length) throw new Error(body.error ?? String(response.status))
         setRows((current) => (body.changed === false && current.length > 0 ? current : body.rows ?? current))
+        setRowsSource(source)
         setError(null)
       })
       .catch((reason: unknown) => {
@@ -69,10 +87,28 @@ export default function App() {
     return () => controller.abort()
   }, [source])
 
+  // A model this source has not shown before gets its default tick once.
+  useEffect(() => {
+    if (rows.length === 0 || rowsSource !== source) return
+    setPerSource((current) => {
+      const ticks = current[source]
+      const unseen = [...new Set(rows.map((row) => row.model))].filter((model) => !ticks.seen.has(model))
+      if (unseen.length === 0) return current
+      const ticked = defaultTicked(rows)
+      return {
+        ...current,
+        [source]: {
+          hidden: new Set([...ticks.hidden, ...unseen.filter((model) => !ticked.has(model))]),
+          seen: new Set([...ticks.seen, ...unseen]),
+        },
+      }
+    })
+  }, [rows, rowsSource, source])
+
   const pickSource = (next: SourceId) => {
     if (next === source) return
     const url = new URL(window.location.href)
-    if (next === "cursorbench") url.searchParams.delete("source")
+    if (next === "aa") url.searchParams.delete("source")
     else url.searchParams.set("source", next)
     window.history.replaceState(null, "", url)
     setPinned(null)
@@ -101,13 +137,13 @@ export default function App() {
   }
 
   const setModels = (models: readonly string[], show: boolean) => {
-    setHiddenModels((current) => {
-      const next = new Set(current)
+    setPerSource((current) => {
+      const next = new Set(current[source].hidden)
       for (const model of models) {
         if (show) next.delete(model)
         else next.add(model)
       }
-      return next
+      return { ...current, [source]: { ...current[source], hidden: next } }
     })
     if (show) {
       const providers = new Set(rows.filter((row) => models.includes(row.model)).map((row) => row.provider))
@@ -124,9 +160,9 @@ export default function App() {
           <h1>Five CLIs</h1>
         </div>
         <p className="deck">
-          Score vs. cost per task. Cheaper is further right. Every model the source lists for these five CLIs is drawn,
-          every version of every line (Artificial Analysis: releases from the last eight months). The newest version of a
-          line keeps its colour; older ones fade, paler the older they are. Each CLI has one colour family. Use ▾ on a chip to untick models.
+          Score vs. cost per task. Cheaper is further right. One model per CLI is ticked to start; ▾ on a chip lists every
+          version of every line the source has (Artificial Analysis: releases from the last eight months). Each CLI has one
+          colour family; the newest version of a line keeps its colour and older ones fade, paler the older they are.
           {source === "aa"
             ? " AA scores a general intelligence index on another test set; do not compare them with CursorBench percentages."
             : null}
