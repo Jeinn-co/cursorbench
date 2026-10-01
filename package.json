@@ -1,13 +1,14 @@
 {
   "name": "cursorbench",
   "private": true,
-  "version": "1.9.1",
+  "version": "1.10.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "snapshot": "node scripts/snapshot.mjs"
   },
   "dependencies": {
     "react": "^19.1.0",

@@ -2,6 +2,8 @@
 
 A small local viewer that plots **score vs. cost per task** for the models behind five coding CLIs, from the [Artificial Analysis](https://artificialanalysis.ai/models/releases) Intelligence Index (the default) or the [CursorBench](https://cursor.com/cursorbench) leaderboard, so you can see at a glance which model and effort level gives the most score per dollar. Cost is per task at API prices, not a subscription.
 
+**Live:** https://jeinn-co.github.io/cursorbench/ (data refreshed every six hours)
+
 | CLI         | Lines in the ▾ menu (every listed version of each)        |
 | ----------- | --------------------------------------------------------- |
 | Claude Code | Fable, Opus, Sonnet                                       |
@@ -45,7 +47,7 @@ npm install
 npm run dev
 ```
 
-Open the URL Vite prints (default http://localhost:5173).
+Open the URL Vite prints (default http://localhost:5173). The dev server fetches both sources live.
 
 ## Using the chart
 
@@ -79,17 +81,29 @@ The Artificial Analysis source (`/api/bench?source=aa`, in [server/aa.mjs](serve
 
 | Command           | What it does                                   |
 | ----------------- | ---------------------------------------------- |
-| `npm run dev`     | Start the dev server with live data            |
-| `npm run build`   | Type-check and build to `dist/`                |
-| `npm run preview` | Serve the build, with `/api/bench` still live  |
-| `npm run lint`    | Run ESLint                                     |
+| `npm run dev`      | Start the dev server with live data                          |
+| `npm run snapshot` | Fetch both sources into `public/data/<source>.json`          |
+| `npm run build`    | Type-check and build to `dist/`, including `public/data/`    |
+| `npm run preview`  | Serve the build, reading the snapshot like the live site     |
+| `npm run lint`     | Run ESLint                                                   |
 
-`/api/bench` only exists inside the Vite dev and preview servers. Hosting `dist/` as plain static files will not load any data.
+## Publishing
+
+The site is static and runs on GitHub Pages. React runs in the visitor's browser, so Pages only serves files; the one part that needs a server, fetching CursorBench and Artificial Analysis, happens ahead of time in GitHub Actions.
+
+[.github/workflows/pages.yml](.github/workflows/pages.yml) runs on every push to `main`, every six hours, and on demand:
+
+1. Downloads the live `data/*.json` as a fallback.
+2. Runs `npm run snapshot`. A source that cannot be fetched keeps the previous file, so a blocked request never blanks the site; with nothing to fall back on, the run fails.
+3. Builds with `BASE_PATH=/cursorbench/` and deploys `dist/` to Pages.
+
+The published page reads `data/<source>.json` and shows when the data was fetched in the footer; the dev server keeps answering `/api/bench` live.
 
 ## Project layout
 
 ```
 server/bench.mjs   CursorBench scraper, model filter, cache, and the /api/bench Vite plugin
+scripts/snapshot.mjs  Writes public/data/<source>.json for the static site
 server/aa.mjs      Artificial Analysis source (release pages, per-effort rows, cache)
 src/App.tsx        Page layout, source toggle, data loading, visibility state
 src/Legend.tsx     Legend chips and the per-CLI model menu, grouped by line
@@ -108,6 +122,7 @@ Product marks on the legend chips come from [LobeHub Icons](https://github.com/l
 
 ## Changelog
 
+- **1.10.0** (2026-10-02): Published on GitHub Pages at https://jeinn-co.github.io/cursorbench/. A workflow snapshots both sources every six hours into `data/<source>.json`, keeping the previous file when a fetch fails; the page reads the snapshot and the footer shows when the data was fetched.
 - **1.9.1** (2026-10-02): The page and README say the cost axis is per task at API prices, that the menu lists every version while only ticked ones are drawn, and that new versions start unticked. README intro covers both sources; the hover and effort-count notes match what the page does now.
 - **1.9.0** (2026-10-02): Opens on Artificial Analysis (CursorBench is `?source=cursorbench`) with one model ticked per CLI: Opus 5.5, GPT-6.1 Sol, Grok 4.7, Muse Spark 1.3, Gemini 3.8 Flash, or the first in the menu where a source lacks it. Ticks are kept per source, and a model that appears later starts unticked. Legend chips show each CLI's product mark. The ▾ menu is grouped by line, and a group title ticks the whole line. Colours move to official ones that do not clash: Claude `#D97757`, OpenAI green `#10A37F`, xAI black, Meta AI violet `#9553FF`, Gemini blue `#3186FF`.
 - **1.8.1** (2026-10-02): The ▾ menu goes back to line first, then newest version first within a line, for every CLI. Gemini keeps Pro after Flash-Lite, so both Gemini 3.1 models stay at the bottom.

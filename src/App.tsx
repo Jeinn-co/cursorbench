@@ -11,6 +11,13 @@ import {
 import Chart from "./Chart"
 import Legend from "./Legend"
 
+function formatFetchedAt(value: string) {
+  const at = new Date(value)
+  if (Number.isNaN(at.getTime())) return value
+  const pad = (n: number) => String(n).padStart(2, "0")
+  return `${at.getFullYear()}-${pad(at.getMonth() + 1)}-${pad(at.getDate())} ${pad(at.getHours())}:${pad(at.getMinutes())}`
+}
+
 function initialSource(): SourceId {
   return new URLSearchParams(window.location.search).get("source") === "cursorbench" ? "cursorbench" : "aa"
 }
@@ -64,6 +71,7 @@ export default function App() {
   // The source `rows` came from: right after a switch the old source's rows are still on
   // screen, and defaults must not be worked out from them.
   const [rowsSource, setRowsSource] = useState<SourceId | null>(null)
+  const [fetchedAt, setFetchedAt] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [hover, setHover] = useState<string | null>(null)
   const [pinned, setPinned] = useState<string | null>(null)
@@ -72,12 +80,16 @@ export default function App() {
     const controller = new AbortController()
     setRows([])
     setError(null)
-    fetch(`/api/bench?source=${source}`, { signal: controller.signal })
+    // The dev server answers live; the published site reads the snapshot the GitHub Pages
+    // workflow writes every six hours.
+    const url = import.meta.env.DEV ? `/api/bench?source=${source}` : `${import.meta.env.BASE_URL}data/${source}.json`
+    fetch(url, { signal: controller.signal })
       .then(async (response) => {
-        const body = (await response.json()) as { rows?: Row[]; changed?: boolean; error?: string }
+        const body = (await response.json()) as { rows?: Row[]; changed?: boolean; error?: string; fetchedAt?: string }
         if (!response.ok || !body.rows?.length) throw new Error(body.error ?? String(response.status))
         setRows((current) => (body.changed === false && current.length > 0 ? current : body.rows ?? current))
         setRowsSource(source)
+        setFetchedAt(body.fetchedAt ?? null)
         setError(null)
       })
       .catch((reason: unknown) => {
@@ -201,7 +213,8 @@ export default function App() {
       )}
 
       <p className="foot">
-        <a href={meta.url}>{meta.url}</a> · v{APP_VERSION}
+        <a href={meta.url}>{meta.url}</a>
+        {fetchedAt ? ` · data fetched ${formatFetchedAt(fetchedAt)}` : null} · v{APP_VERSION}
       </p>
     </main>
   )
