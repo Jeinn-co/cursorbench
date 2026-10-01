@@ -46,7 +46,7 @@ export const SOURCES: Record<
   },
 }
 
-export const APP_VERSION = "1.6.0"
+export const APP_VERSION = "1.7.0"
 
 export function providerById(id: ProviderId) {
   const found = PROVIDERS.find((item) => item.id === id)
@@ -54,23 +54,33 @@ export function providerById(id: ProviderId) {
   return found
 }
 
-const GPT_MODEL = /^GPT-(\d+)(?:\.(\d+))? (Astra|Sol|Terra|Luna)$/
+// A model's line and version: "GPT-6.1 Sol" -> Sol 6.1, "Opus 5.5" -> Opus 5.5,
+// "Grok 4.20 0309 v2" -> Grok 4.2, "Gemini 3.5 Flash-Lite" -> Gemini Flash-Lite 3.5,
+// "Muse Spark" -> Muse Spark 0. Versions compare as decimals, so Grok 4.20 (March)
+// sits below Grok 4.7 (September); build dates and "v2" tags are not part of the line.
+export function modelLine(model: string) {
+  const gpt = model.match(/^GPT-(\d+(?:\.\d+)?) (\w+)$/)
+  if (gpt) return { line: gpt[2], version: parseFloat(gpt[1]) }
+  const tokens = model.split(/\s+/)
+  const at = tokens.findIndex((token) => /^\d+(?:\.\d+)?$/.test(token))
+  const version = at >= 0 ? parseFloat(tokens[at]) : 0
+  const line = tokens.filter((token, i) => i !== at && !/^\d+$/.test(token) && !/^v\d+$/i.test(token)).join(" ")
+  return { line, version }
+}
 
-// How many versions behind the newest of its GPT line each older GPT model is
-// (GPT-6 Sol is 1 behind GPT-6.1 Sol, GPT-5.6 Sol is 2). Older ones get grey so the
-// newest stands out.
+// How many versions behind the newest of its line each older model is (Opus 5 is 1
+// behind Opus 5.5, GPT-5.6 Sol is 2 behind GPT-6.1 Sol). Older ones get grey so the
+// newest of every line stands out.
 export function previousGenerations(models: readonly string[]) {
-  const versions = new Map<string, number[]>()
-  const version = (match: RegExpMatchArray) => Number(match[1]) * 1000 + Number(match[2] ?? 0)
+  const versions = new Map<string, Set<number>>()
   for (const model of models) {
-    const match = model.match(GPT_MODEL)
-    if (match) versions.set(match[3], [...(versions.get(match[3]) ?? []), version(match)])
+    const { line, version } = modelLine(model)
+    versions.set(line, (versions.get(line) ?? new Set()).add(version))
   }
   const behind = new Map<string, number>()
   for (const model of models) {
-    const match = model.match(GPT_MODEL)
-    if (!match) continue
-    const newer = new Set((versions.get(match[3]) ?? []).filter((value) => value > version(match))).size
+    const { line, version } = modelLine(model)
+    const newer = [...(versions.get(line) ?? [])].filter((value) => value > version).length
     if (newer > 0) behind.set(model, newer)
   }
   return behind
@@ -83,6 +93,10 @@ export function seriesColor(model: string, provider: ProviderId, behind = 0) {
   if (model.startsWith("Sonnet")) return "#c4552a"
   if (model.startsWith("Fable")) return "#9a3412"
   if (model.includes("Argon")) return "#1e3a8a"
+  if (model.includes("Flash-Lite")) return "#60a5fa"
+  if (model.includes(" Pro")) return "#4338ca"
+  if (model.startsWith("Grok Build")) return "#78716c"
+  if (model.startsWith("Muse Glimmer")) return "#a855f7"
   if (model.includes("Sol")) return "#059669"
   if (model.includes("Terra")) return "#d97706"
   if (model.includes("Astra")) return "#0f766e"

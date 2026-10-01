@@ -61,6 +61,10 @@ function objects(text, prefix) {
 // AA names Claude models "Claude Opus 5.5"; the chart uses CursorBench's "Opus 5.5".
 const displayName = (name) => name.replace(/^Claude /, "")
 
+// AA lists every release back to 2023; only those from roughly the last eight months are
+// drawn, so the window moves with time instead of pinning a date.
+const RECENT_DAYS = 240
+
 // Releases to show, as [{ slug, model }], picked from AA's full release list.
 // A release appears either as a release object (slug, name, releaseDate) or only
 // through its variants' `release` field, so both are read; a release counts once
@@ -70,11 +74,16 @@ export function pickReleases(html) {
   for (const item of objects(html, '\\{"(?:id":"[0-9a-f-]+","slug|slug)":"[a-z0-9-]+"')) {
     const release = item.release ?? (item.releaseDate && item.name ? item : null)
     if (!release?.slug || !release.name) continue
-    const entry = releases.get(release.slug) ?? { slug: release.slug, model: displayName(release.name), scored: false }
+    const entry = releases.get(release.slug) ??
+      { slug: release.slug, model: displayName(release.name), scored: false, date: null }
     if (item.intelligenceIndex != null) entry.scored = true
+    if (item.releaseDate && (!entry.date || item.releaseDate > entry.date)) entry.date = item.releaseDate
     releases.set(release.slug, entry)
   }
-  const scored = [...releases.values()].filter((release) => release.scored && providerOf(release.model))
+  const since = new Date(Date.now() - RECENT_DAYS * 86_400_000).toISOString().slice(0, 10)
+  const scored = [...releases.values()].filter(
+    (release) => release.scored && release.date && release.date >= since && providerOf(release.model),
+  )
   const shown = shownModels(scored.map((release) => release.model))
   return scored.filter((release) => shown.has(release.model)).map(({ slug, model }) => ({ slug, model }))
 }
@@ -85,13 +94,20 @@ export function releaseRows(html, release) {
   const rows = new Map()
   for (const variant of objects(html, '\\{"id":"[0-9a-f-]+","slug":"')) {
     if (variant.release?.slug !== release.slug || rows.has(variant.slug)) continue
-    const effort = EFFORT_BY_LEVEL[variant.effort?.level]
+    const level = variant.effort?.level
+    // A reasoning variant AA lists without an effort level (Gemini 3.1 Pro Preview) is
+    // drawn as one point with no effort; a non-reasoning variant is left out.
+    if (level == null && variant.isReasoning !== true) continue
+    const effort = level == null ? null : EFFORT_BY_LEVEL[level]
+    if (level != null && !effort) continue
     const score = variant.intelligenceIndex
+    // The x axis is cost: a variant AA scored but did not cost (Opus 4.7, Grok 4.20)
+    // cannot be placed and is left out rather than given a guessed cost.
     const cost = variant.intelligenceIndexCostPerTask?.cost?.total
-    if (!effort || score == null || !(cost > 0)) continue
+    if (score == null || !(cost > 0)) continue
     rows.set(variant.slug, {
       rank: 0,
-      label: `${release.model} ${effort}`,
+      label: effort ? `${release.model} ${effort}` : release.model,
       model: release.model,
       effort,
       score,
@@ -125,15 +141,21 @@ export async function loadAa() {
     const picked = pickReleases(await page(BASE))
     if (picked.length === 0) throw new Error("no releases")
     const releases = {}
-    for (const release of picked) {
-      try {
-        releases[release.slug] = releaseRows(await page(`${BASE}/${release.slug}`), release)
-      } catch (error) {
-        // Keep the last good rows for a release whose page failed this time.
-        if (!cached?.releases?.[release.slug]) throw error
-        releases[release.slug] = cached.releases[release.slug]
+    // A few pages at a time: there are about thirty, each close to 1 MB.
+    const queue = [...picked]
+    const worker = async () => {
+      for (let release = queue.shift(); release; release = queue.shift()) {
+        try {
+          releases[release.slug] = releaseRows(await page(`${BASE}/${release.slug}`), release)
+        } catch {
+          // Keep the last good rows for a release whose page failed this time; a
+          // release that never loaded is left out rather than failing the chart.
+          if (cached?.releases?.[release.slug]) releases[release.slug] = cached.releases[release.slug]
+        }
       }
     }
+    await Promise.all(Array.from({ length: 4 }, worker))
+    if (Object.keys(releases).length === 0) throw new Error("no release page loaded")
     const data = { fetchedAt: new Date().toISOString(), releases }
     await mkdir(dirname(CACHE), { recursive: true })
     await writeFile(CACHE, JSON.stringify(data))

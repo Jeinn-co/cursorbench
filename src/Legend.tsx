@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react"
-import { PROVIDERS, seriesColor, type ProviderId, type Row } from "./bench"
+import { PROVIDERS, modelLine, seriesColor, type ProviderId, type Row } from "./bench"
 
 type Props = {
   rows: Row[]
@@ -10,24 +10,22 @@ type Props = {
   onSetModels: (models: readonly string[], visible: boolean) => void
 }
 
-// Menu order: by line (Fable, Opus, Sonnet; GPT Astra, Sol, Terra, Luna; Gemini Argon,
-// Flash), and newest version first within a line, so the list does not reshuffle when
-// scores move.
-const LINE_ORDER = ["Fable", "Opus", "Sonnet", "Astra", "Sol", "Terra", "Luna", "Grok", "Muse Spark", "Gemini Argon", "Gemini Flash"]
-
-function lineAndVersion(model: string) {
-  const gpt = model.match(/^GPT-(\d+(?:\.\d+)?) (\w+)$/)
-  const version = gpt ? gpt[1] : (model.match(/\d+(?:\.\d+)?/)?.[0] ?? "0")
-  const line = gpt ? gpt[2] : model.replace(version, "").replace(/\s+/g, " ").trim()
-  const [major, minor = "0"] = version.split(".")
-  return { line, version: Number(major) * 1000 + Number(minor) }
-}
+// Menu order: by line (Fable, Opus, Sonnet; GPT Astra, Sol, Terra, Luna; Grok, Grok Build;
+// Muse Spark, Glimmer; Gemini Argon, Pro, Flash, Flash-Lite), and newest version first within a
+// line, so the list does not reshuffle when scores move.
+const LINE_ORDER = [
+  "Fable", "Opus", "Sonnet",
+  "Astra", "Sol", "Terra", "Luna",
+  "Grok", "Grok Build",
+  "Muse Spark", "Muse Glimmer",
+  "Gemini Argon", "Gemini Pro Preview", "Gemini Flash", "Gemini Flash-Lite",
+]
 
 function compareModels(a: string, b: string) {
-  const x = lineAndVersion(a)
-  const y = lineAndVersion(b)
+  const x = modelLine(a)
+  const y = modelLine(b)
   const rank = (line: string) => (LINE_ORDER.includes(line) ? LINE_ORDER.indexOf(line) : LINE_ORDER.length)
-  return rank(x.line) - rank(y.line) || x.line.localeCompare(y.line) || y.version - x.version
+  return rank(x.line) - rank(y.line) || x.line.localeCompare(y.line) || y.version - x.version || b.localeCompare(a)
 }
 
 // Models of one provider in menu order, with how many points each has.

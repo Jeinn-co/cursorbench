@@ -24,10 +24,6 @@ function splitLabel(label) {
   return { model: label, effort: null }
 }
 
-const KEEP = new Set(["Opus 5.5", "Sonnet 5.5", "Grok 4.7", "Muse Spark 1.3", "Gemini 3.8 Flash"])
-// Shown on top of the pinned models, on whichever source lists them.
-const EXTRA = new Set(["Fable 5.1", "Gemini 4 Argon"])
-const GPT_LINES = ["Astra", "Sol", "Terra", "Luna"]
 const GPT_MODEL = /^GPT-(\d+(?:\.\d+)?) (Astra|Sol|Terra|Luna)$/
 
 export function providerOf(model) {
@@ -39,16 +35,11 @@ export function providerOf(model) {
   return null
 }
 
-// Which of the given model names are shown: the pinned models, the extras, and
-// every listed version of each GPT line (Astra, Sol, Terra, Luna). Shared by the
-// CursorBench and AA sources.
+// Every model of the five CLIs' providers is shown, every listed version of every
+// line; older versions are greyed in the chart and can be unticked in the menu.
+// Shared by the CursorBench and AA sources (AA also limits by release date).
 export function shownModels(models) {
-  return new Set(
-    models.filter((model) => {
-      const gpt = model.match(GPT_MODEL)
-      return KEEP.has(model) || EXTRA.has(model) || (gpt !== null && GPT_LINES.includes(gpt[2]))
-    }),
-  )
+  return new Set(models.filter((model) => providerOf(model) !== null))
 }
 
 export function selectRows(rows) {

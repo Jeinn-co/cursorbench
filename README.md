@@ -2,17 +2,17 @@
 
 A small local viewer for the [CursorBench](https://cursor.com/cursorbench) leaderboard. It plots **score vs. cost per task** for the models behind five coding CLIs, so you can see at a glance which model and effort level gives the most score per dollar.
 
-| CLI         | Models shown                                   |
-| ----------- | ---------------------------------------------- |
-| Claude Code | Opus 5.5, Sonnet 5.5, Fable 5.1                |
-| Codex       | Every GPT Astra, Sol, Terra, Luna version (below) |
-| Grok        | Grok 4.7                                       |
-| Muse        | Muse Spark 1.3                                 |
-| Gemini      | Gemini 3.8 Flash, Gemini 4 Argon (AA only)     |
+| CLI         | Lines drawn (every listed version of each)                |
+| ----------- | --------------------------------------------------------- |
+| Claude Code | Fable, Opus, Sonnet                                       |
+| Codex       | GPT Astra, Sol, Terra, Luna                               |
+| Grok        | Grok, Grok Build                                          |
+| Muse        | Muse Spark, Muse Glimmer                                  |
+| Gemini      | Gemini Argon, Pro, Flash, Flash-Lite                      |
 
 Every effort level listed on CursorBench (Minimal → Max) appears as its own point, and each model's points are connected into one line.
 
-Besides the pinned models, Fable 5.1 and Gemini 4 Argon are drawn on whichever source lists them. Gemini 4 Argon is on Artificial Analysis only for now.
+Every model the source lists for these five CLIs is drawn, every version of every line. On Artificial Analysis only releases from roughly the last eight months are drawn, and a model AA scored without a cost per task (for example Opus 4.7 or Grok 4.20) cannot be placed on the cost axis and is left out.
 
 ![Demo: score vs. cost per task for five coding CLIs](docs/demo.png)
 
@@ -20,7 +20,7 @@ Hovering a point spotlights that model: the other lines fade, a crosshair marks 
 
 ![Demo: hover spotlights one model and dims the rest](docs/demo-hover.png)
 
-Each legend chip also has a ▾ menu to tick the models of that CLI one by one. Here GPT-5.6 Terra, GPT-6 Luna and GPT-5.6 Luna are unticked, so Codex shows 20 of its 35 points.
+Each legend chip also has a ▾ menu to tick the models of that CLI one by one. Here GPT-5.6 Terra, GPT-6 Luna and GPT-5.6 Luna are unticked, so Codex shows 20 of its 35 points. The menu lists models by line and newest version first, the same order as the table above.
 
 ![Demo: the model menu under a legend chip](docs/demo-menu.png)
 
@@ -28,11 +28,11 @@ Clicking a legend chip shows or hides that CLI. Here only Codex is visible, comp
 
 ![Demo: legend chips filter the chart to one CLI](docs/demo-filter.png)
 
-**GPT rule:** Codex draws every version the source lists for the Astra, Sol, Terra and Luna lines, so on Artificial Analysis GPT-6.1 Sol, GPT-6 Sol and GPT-5.6 Sol all appear. The newest version of a line keeps its colour; the one before it is dark grey and anything older is light grey. A new version appears as soon as the source lists it, with no code change. Untick older versions in the ▾ menu to hide them.
+**Version rule:** every version the source lists for a line is drawn, so on Artificial Analysis GPT-6.1 Sol, GPT-6 Sol and GPT-5.6 Sol all appear, as do Opus 5.5 and Opus 5. The newest version of a line keeps its colour; the one before it is dark grey and anything older is light grey. Versions compare as decimals, so Grok 4.20 counts as older than Grok 4.7. A new version appears as soon as the source lists it, with no code change. Untick older versions in the ▾ menu to hide them.
 
 As of 2026-10-01 CursorBench has no GPT-6 models, so it shows only GPT-5.6. GPT-6 has no Terra line.
 
-**Data source switch:** the toggle above the legend swaps CursorBench for the [Artificial Analysis](https://artificialanalysis.ai/models/releases) Intelligence Index, using the same models and the same GPT rule. AA already lists GPT-6.1 Sol, GPT-6 Sol, GPT-6 Astra, GPT-6 Luna and Gemini 4 Argon. Its score is a general intelligence index on a different test set, so read it on its own and do not compare it with CursorBench percentages. AA scores fewer efforts for some models (Grok 4.7 and Muse Spark 1.3 have two each). The choice is kept in the URL as `?source=aa`.
+**Data source switch:** the toggle above the legend swaps CursorBench for the [Artificial Analysis](https://artificialanalysis.ai/models/releases) Intelligence Index, using the same lines and the same version rule. AA already lists GPT-6.1 Sol, GPT-6 Sol, GPT-6 Astra, GPT-6 Luna and Gemini 4 Argon. Its score is a general intelligence index on a different test set, so read it on its own and do not compare it with CursorBench percentages. AA scores fewer efforts for some models (Grok 4.7 and Muse Spark 1.3 have two each). The choice is kept in the URL as `?source=aa`.
 
 ![Demo: the same chart on the Artificial Analysis Intelligence Index](docs/demo-aa.png)
 
@@ -51,7 +51,7 @@ Open the URL Vite prints (default http://localhost:5173).
 
 - **Source toggle:** switch between CursorBench and Artificial Analysis.
 - **Legend chips:** an on/off switch for a whole CLI. Turning it off and on again keeps the models you ticked in its menu. The number is how many points it has, or shown/total when some models are unticked.
-- **▾ next to a chip:** tick or untick that CLI's models one by one, or all at once. Models are listed by line (Fable, Opus, Sonnet; GPT Astra, Sol, Terra, Luna; Gemini Argon, Flash), newest version first. Esc or a click outside closes it.
+- **▾ next to a chip:** tick or untick that CLI's models one by one, or all at once. Models are listed by line (Fable, Opus, Sonnet; GPT Astra, Sol, Terra, Luna; Grok, Grok Build; Muse Spark, Glimmer; Gemini Argon, Pro, Flash, Flash-Lite), newest version first. Esc or a click outside closes it.
 - **Remembered:** chip switches and menu ticks are saved in this browser (localStorage), so a reload or the next visit keeps them. They apply to both sources.
 - **Hover** a point to highlight its label, score, and cost.
 - **Click** a point to pin it. Click again to unpin.
@@ -69,8 +69,8 @@ CursorBench has no public API or data file, so the dev server scrapes the leader
 
 The Artificial Analysis source (`/api/bench?source=aa`, in [server/aa.mjs](server/aa.mjs)) works differently:
 
-1. It fetches the AA "All releases" page and picks the releases to show with the same model rule. A release is found from its release entry or from its variants, since some releases (such as GPT-5.6 Sol) only appear through their variants.
-2. It fetches each picked release page and reads that release's own per-effort entries. An effort without an index score or a cost per task is left out.
+1. It fetches the AA "All releases" page and picks every scored release of the five CLIs' providers from the last 240 days. A release is found from its release entry or from its variants, since some releases (such as GPT-5.6 Sol) only appear through their variants.
+2. It fetches each picked release page (four at a time) and reads that release's own per-effort entries. An effort without an index score or a cost per task is left out; a reasoning variant with no effort level becomes one point without an effort; non-reasoning variants are left out.
 3. Results are cached in `data/aa-cache.json` for 6 hours. If a release page fails, its last cached rows are kept.
 
 `data/` is git-ignored, so the cache is created on your first run.
@@ -99,10 +99,11 @@ src/bench.ts       Shared types, provider colors, formatting helpers
 
 ## Changing which models are shown
 
-Edit `KEEP`, `EXTRA` and `GPT_LINES` in [server/bench.mjs](server/bench.mjs), then delete `data/bench-cache.json` and `data/aa-cache.json` so the next load rebuilds both caches.
+Which providers count is `providerOf` in [server/bench.mjs](server/bench.mjs); the AA date window is `RECENT_DAYS` in [server/aa.mjs](server/aa.mjs). Edit them, then delete `data/bench-cache.json` and `data/aa-cache.json` so the next load rebuilds both caches.
 
 ## Changelog
 
+- **1.7.0** (2026-10-02): Every model of the five CLIs is drawn, every version of every line (AA: releases from the last 240 days). The older-is-grey rule and the newest-first menu order now cover every line, not only GPT. Versions compare as decimals (Grok 4.20 below 4.7). Gemini 3.1 Pro Preview, a reasoning variant without an effort level, shows as one point.
 - **1.6.0** (2026-10-02): Chip switches and menu ticks are remembered in the browser. A chip is now only an on/off switch: turning a CLI back on keeps the models ticked in its menu instead of ticking them all.
 - **1.5.2** (2026-10-02): Menu line order is Fable, Opus, Sonnet for Claude Code and Argon, Flash for Gemini.
 - **1.5.1** (2026-10-02): The ▾ menu lists models by line and newest version first, instead of by score, so the order stays put when scores change.

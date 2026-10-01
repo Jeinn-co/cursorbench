@@ -124,9 +124,9 @@ export default function App() {
           <h1>Five CLIs</h1>
         </div>
         <p className="deck">
-          Score vs. cost per task. Cheaper is further right. Pinned to Opus 5.5, Sonnet 5.5, Grok 4.7, Muse Spark 1.3, and
-          Gemini 3.8 Flash, plus Fable 5.1 and Gemini 4 Argon where listed, and every listed version of the GPT Astra, Sol,
-          Terra and Luna lines. Older GPT versions are grey, lighter the older they are.
+          Score vs. cost per task. Cheaper is further right. Every model the source lists for these five CLIs is drawn,
+          every version of every line (Artificial Analysis: releases from the last eight months). The newest version of a
+          line keeps its colour; older ones are grey, lighter the older they are. Use ▾ on a chip to untick models.
           {source === "aa"
             ? " AA scores a general intelligence index on another test set; do not compare them with CursorBench percentages."
             : null}
