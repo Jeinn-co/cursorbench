@@ -103,6 +103,7 @@ Which providers count is `providerOf` in [server/bench.mjs](server/bench.mjs); t
 
 ## Changelog
 
+- **1.7.1** (2026-10-02): Screenshots keep only the newest version of each line ticked, and the menu caption says which older versions are unticked.
 - **1.7.0** (2026-10-02): Every model of the five CLIs is drawn, every version of every line (AA: releases from the last 240 days). The older-is-grey rule and the newest-first menu order now cover every line, not only GPT. Versions compare as decimals (Grok 4.20 below 4.7). Gemini 3.1 Pro Preview, a reasoning variant without an effort level, shows as one point.
 - **1.6.0** (2026-10-02): Chip switches and menu ticks are remembered in the browser. A chip is now only an on/off switch: turning a CLI back on keeps the models ticked in its menu instead of ticking them all.
 - **1.5.2** (2026-10-02): Menu line order is Fable, Opus, Sonnet for Claude Code and Argon, Flash for Gemini.
