@@ -20,7 +20,7 @@ Hovering a point spotlights that model: the other lines fade, a crosshair marks 
 
 ![Demo: hover spotlights one model and dims the rest](docs/demo-hover.png)
 
-Each legend chip also has a ▾ menu to tick the models of that CLI one by one. Here the older GPT-6 Sol, GPT-5.6 Sol and GPT-5.6 Luna are unticked, so Codex shows 20 of its 35 points. The screenshots on this page keep only the newest version of each line ticked. The menu lists the newest generation first, so older versions sink to the bottom.
+Each legend chip also has a ▾ menu to tick the models of that CLI one by one. Here the older GPT-6 Sol, GPT-5.6 Sol and GPT-5.6 Luna are unticked, so Codex shows 20 of its 35 points. The screenshots on this page keep only the newest version of each line ticked. The menu lists models by line, newest version first within each line.
 
 ![Demo: the model menu under a legend chip](docs/demo-menu.png)
 
@@ -51,7 +51,7 @@ Open the URL Vite prints (default http://localhost:5173).
 
 - **Source toggle:** switch between CursorBench and Artificial Analysis.
 - **Legend chips:** an on/off switch for a whole CLI. Turning it off and on again keeps the models you ticked in its menu. The number is how many points it has, or shown/total when some models are unticked.
-- **▾ next to a chip:** tick or untick that CLI's models one by one, or all at once. Models are listed newest generation first, so older versions sink to the bottom. For Claude Code, Codex, Grok and Muse a generation is the major version, then how many versions a model trails the newest of its line (Fable 5.1, Opus 5.5, Sonnet 5.5, then Fable 5, Opus 5, Sonnet 5, then Opus 4.8, Sonnet 4.6). Gemini numbers every line on one shared track, so it is plain newest number first. Line order breaks ties: Fable, Opus, Sonnet; GPT Astra, Sol, Terra, Luna; Grok, Grok Build; Muse Spark, Glimmer; Gemini Argon, Flash, Flash-Lite, Pro. Esc or a click outside closes it.
+- **▾ next to a chip:** tick or untick that CLI's models one by one, or all at once. Models are listed by line (Fable, Opus, Sonnet; GPT Astra, Sol, Terra, Luna; Grok, Grok Build; Muse Spark, Glimmer; Gemini Argon, Flash, Flash-Lite, Pro), newest version first within each line. Esc or a click outside closes it.
 - **Remembered:** chip switches and menu ticks are saved in this browser (localStorage), so a reload or the next visit keeps them. They apply to both sources.
 - **Hover** a point to highlight its label, score, and cost.
 - **Click** a point to pin it. Click again to unpin.
@@ -103,6 +103,7 @@ Which providers count is `providerOf` in [server/bench.mjs](server/bench.mjs); t
 
 ## Changelog
 
+- **1.8.1** (2026-10-02): The ▾ menu goes back to line first, then newest version first within a line, for every CLI. Gemini keeps Pro after Flash-Lite, so both Gemini 3.1 models stay at the bottom.
 - **1.8.0** (2026-10-02): One colour family per CLI, a shade per line, and older versions fade instead of turning grey, paler the older they are. The ▾ menu lists the newest generation first, so older versions sink to the bottom (Gemini: newest number first).
 - **1.7.2** (2026-10-02): In the Gemini menu, Pro comes after Flash-Lite, so both Gemini 3.1 models sit at the bottom.
 - **1.7.1** (2026-10-02): Screenshots keep only the newest version of each line ticked, and the menu caption says which older versions are unticked.
