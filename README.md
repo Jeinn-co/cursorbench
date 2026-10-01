@@ -1,8 +1,8 @@
 # cursorbench
 
-A small local viewer for the [CursorBench](https://cursor.com/cursorbench) leaderboard. It plots **score vs. cost per task** for the models behind five coding CLIs, so you can see at a glance which model and effort level gives the most score per dollar.
+A small local viewer that plots **score vs. cost per task** for the models behind five coding CLIs, from the [Artificial Analysis](https://artificialanalysis.ai/models/releases) Intelligence Index (the default) or the [CursorBench](https://cursor.com/cursorbench) leaderboard, so you can see at a glance which model and effort level gives the most score per dollar. Cost is per task at API prices, not a subscription.
 
-| CLI         | Lines drawn (every listed version of each)                |
+| CLI         | Lines in the ▾ menu (every listed version of each)        |
 | ----------- | --------------------------------------------------------- |
 | Claude Code | Fable, Opus, Sonnet                                       |
 | Codex       | GPT Astra, Sol, Terra, Luna                               |
@@ -10,13 +10,13 @@ A small local viewer for the [CursorBench](https://cursor.com/cursorbench) leade
 | Muse        | Muse Spark, Muse Glimmer                                  |
 | Gemini      | Gemini Argon, Flash, Flash-Lite, Pro                      |
 
-Every effort level listed on CursorBench (Minimal → Max) appears as its own point, and each model's points are connected into one line.
+Every effort level the source lists (Minimal → Max) appears as its own point, and each model's points are connected into one line.
 
 The page opens on Artificial Analysis, with one model ticked per CLI: Opus 5.5, GPT-6.1 Sol, Grok 4.7, Muse Spark 1.3 and Gemini 3.8 Flash. A CLI that has none of these on a source gets the first model of its menu instead (on CursorBench, Codex starts on GPT-5.6 Sol). Every other model the source lists for these five CLIs, every version of every line, is in the ▾ menu to tick. On Artificial Analysis only releases from roughly the last eight months are drawn, and a model AA scored without a cost per task (for example Opus 4.7 or Grok 4.20) cannot be placed on the cost axis and is left out.
 
 ![Demo: score vs. cost per task for five coding CLIs](docs/demo.png)
 
-Hovering a point spotlights that model: the other lines fade, a crosshair marks its score and cost, and a tooltip shows the details.
+Hovering a point spotlights that model: the other lines fade, a crosshair marks its score and cost on the axes, and the model name and effort appear beside the point.
 
 ![Demo: hover spotlights one model and dims the rest](docs/demo-hover.png)
 
@@ -28,11 +28,11 @@ Clicking a legend chip shows or hides that CLI. Here only Codex is visible.
 
 ![Demo: legend chips filter the chart to one CLI](docs/demo-filter.png)
 
-**Version rule:** every version the source lists for a line is drawn, so on Artificial Analysis GPT-6.1 Sol, GPT-6 Sol and GPT-5.6 Sol all appear, as do Opus 5.5 and Opus 5. Each CLI has one colour family taken from an official colour that does not clash with the others: Claude Code terracotta `#D97757`, Codex in OpenAI green `#10A37F`, Grok in xAI black, Muse in Meta AI violet `#9553FF` and Gemini blue `#3186FF`. Within a family the flagship line is darker and the small line lighter. The newest version of a line keeps its colour; older versions fade toward white, paler the older they are, so a faded line still reads as its CLI. Versions compare as decimals, so Grok 4.20 counts as older than Grok 4.7. A new version appears as soon as the source lists it, with no code change. Untick older versions in the ▾ menu to hide them.
+**Version rule:** every version the source lists for a line is in the ▾ menu, so on Artificial Analysis GPT-6.1 Sol, GPT-6 Sol and GPT-5.6 Sol are all there, as are Opus 5.5 and Opus 5; ticked ones are drawn. Each CLI has one colour family taken from an official colour that does not clash with the others: Claude Code terracotta `#D97757`, Codex in OpenAI green `#10A37F`, Grok in xAI black, Muse in Meta AI violet `#9553FF` and Gemini blue `#3186FF`. Within a family the flagship line is darker and the small line lighter. The newest version of a line keeps its colour; older versions fade toward white, paler the older they are, so a faded line still reads as its CLI. Versions compare as decimals, so Grok 4.20 counts as older than Grok 4.7. A new version joins the menu as soon as the source lists it, with no code change, and starts unticked. Tick older versions in the ▾ menu to compare them.
 
-As of 2026-10-01 CursorBench has no GPT-6 models, so it shows only GPT-5.6. GPT-6 has no Terra line.
+As of 2026-10-02 CursorBench has no GPT-6 models, so it shows only GPT-5.6. GPT-6 has no Terra line.
 
-**Data source switch:** the toggle above the legend swaps the [Artificial Analysis](https://artificialanalysis.ai/models/releases) Intelligence Index (the default) for CursorBench, using the same lines and the same version rule. AA already lists GPT-6.1 Sol, GPT-6 Sol, GPT-6 Astra, GPT-6 Luna and Gemini 4 Argon. Its score is a general intelligence index on a different test set, so read it on its own and do not compare it with CursorBench percentages. AA scores fewer efforts for some models (Grok 4.7 and Muse Spark 1.3 have two each). CursorBench is kept in the URL as `?source=cursorbench`.
+**Data source switch:** the toggle above the legend swaps the [Artificial Analysis](https://artificialanalysis.ai/models/releases) Intelligence Index (the default) for CursorBench, using the same lines and the same version rule. AA already lists GPT-6.1 Sol, GPT-6 Sol, GPT-6 Astra, GPT-6 Luna and Gemini 4 Argon. Its score is a general intelligence index on a different test set, so read it on its own and do not compare it with CursorBench percentages. AA scores fewer efforts for some models: Muse Spark 1.3 has two points on AA against six on CursorBench. CursorBench is kept in the URL as `?source=cursorbench`.
 
 ![Demo: the same chart on CursorBench](docs/demo-cursorbench.png)
 
@@ -95,7 +95,7 @@ src/App.tsx        Page layout, source toggle, data loading, visibility state
 src/Legend.tsx     Legend chips and the per-CLI model menu, grouped by line
 src/logos.ts       Product marks for the chips (LobeHub Icons, MIT)
 src/Chart.tsx      SVG scatter/line chart (score vs. cost)
-src/bench.ts       Shared types, provider colors, formatting helpers
+src/bench.ts       Shared types, sources, colours, model lines, menu order, default ticks, formatting
 ```
 
 ## Changing which models are shown
@@ -108,6 +108,7 @@ Product marks on the legend chips come from [LobeHub Icons](https://github.com/l
 
 ## Changelog
 
+- **1.9.1** (2026-10-02): The page and README say the cost axis is per task at API prices, that the menu lists every version while only ticked ones are drawn, and that new versions start unticked. README intro covers both sources; the hover and effort-count notes match what the page does now.
 - **1.9.0** (2026-10-02): Opens on Artificial Analysis (CursorBench is `?source=cursorbench`) with one model ticked per CLI: Opus 5.5, GPT-6.1 Sol, Grok 4.7, Muse Spark 1.3, Gemini 3.8 Flash, or the first in the menu where a source lacks it. Ticks are kept per source, and a model that appears later starts unticked. Legend chips show each CLI's product mark. The ▾ menu is grouped by line, and a group title ticks the whole line. Colours move to official ones that do not clash: Claude `#D97757`, OpenAI green `#10A37F`, xAI black, Meta AI violet `#9553FF`, Gemini blue `#3186FF`.
 - **1.8.1** (2026-10-02): The ▾ menu goes back to line first, then newest version first within a line, for every CLI. Gemini keeps Pro after Flash-Lite, so both Gemini 3.1 models stay at the bottom.
 - **1.8.0** (2026-10-02): One colour family per CLI, a shade per line, and older versions fade instead of turning grey, paler the older they are. The ▾ menu lists the newest generation first, so older versions sink to the bottom (Gemini: newest number first).

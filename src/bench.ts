@@ -50,7 +50,7 @@ export const SOURCES: Record<
   },
 }
 
-export const APP_VERSION = "1.9.0"
+export const APP_VERSION = "1.9.1"
 
 export function providerById(id: ProviderId) {
   const found = PROVIDERS.find((item) => item.id === id)

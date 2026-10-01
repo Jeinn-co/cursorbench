@@ -160,7 +160,7 @@ export default function App() {
           <h1>Five CLIs</h1>
         </div>
         <p className="deck">
-          Score vs. cost per task. Cheaper is further right. One model per CLI is ticked to start; ▾ on a chip lists every
+          Score vs. cost per task at API prices. Cheaper is further right. One model per CLI is ticked to start; ▾ on a chip lists every
           version of every line the source has (Artificial Analysis: releases from the last eight months). Each CLI has one
           colour family; the newest version of a line keeps its colour and older ones fade, paler the older they are.
           {source === "aa"
