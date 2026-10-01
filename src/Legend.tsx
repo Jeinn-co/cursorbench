@@ -10,9 +10,10 @@ type Props = {
   onSetModels: (models: readonly string[], visible: boolean) => void
 }
 
-// Menu order: by line (Opus, Sonnet, Fable; GPT Astra, Sol, Terra, Luna; ...), and
-// newest version first within a line, so the list does not reshuffle when scores move.
-const LINE_ORDER = ["Opus", "Sonnet", "Fable", "Astra", "Sol", "Terra", "Luna", "Grok", "Muse Spark", "Gemini Flash", "Gemini Argon"]
+// Menu order: by line (Fable, Opus, Sonnet; GPT Astra, Sol, Terra, Luna; Gemini Argon,
+// Flash), and newest version first within a line, so the list does not reshuffle when
+// scores move.
+const LINE_ORDER = ["Fable", "Opus", "Sonnet", "Astra", "Sol", "Terra", "Luna", "Grok", "Muse Spark", "Gemini Argon", "Gemini Flash"]
 
 function lineAndVersion(model: string) {
   const gpt = model.match(/^GPT-(\d+(?:\.\d+)?) (\w+)$/)

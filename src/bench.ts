@@ -46,7 +46,7 @@ export const SOURCES: Record<
   },
 }
 
-export const APP_VERSION = "1.5.1"
+export const APP_VERSION = "1.5.2"
 
 export function providerById(id: ProviderId) {
   const found = PROVIDERS.find((item) => item.id === id)
