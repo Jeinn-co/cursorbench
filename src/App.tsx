@@ -76,8 +76,8 @@ export default function App() {
         </div>
         <p className="deck">
           Score vs. cost per task. Cheaper is further right. Pinned to Opus 5.5, Sonnet 5.5, Grok 4.7, Muse Spark 1.3, and
-          Gemini 3.8 Flash. Each GPT line (Astra, Sol, Terra, Luna) shows its newest listed version, so GPT-6.1 Sol would
-          replace GPT-6 Sol, which replaces GPT-5.6 Sol.
+          Gemini 3.8 Flash, plus Fable 5.1, GPT-5.6 Sol and Gemini 4 Argon where listed. Each GPT line (Astra, Sol, Terra,
+          Luna) shows its newest listed version; an older GPT shown beside a newer one is grey.
           {source === "aa"
             ? " AA scores a general intelligence index on another test set; do not compare them with CursorBench percentages."
             : null}

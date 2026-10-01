@@ -4,6 +4,7 @@ import {
   formatCostTick,
   formatScore,
   niceCeil,
+  previousGenerations,
   seriesColor,
   tickValues,
   type Row,
@@ -73,6 +74,9 @@ export default function Chart({ rows, unit, scoreName, active, onHover, onPick }
   const xTicks = tickValues(0, xMax, 6)
   const yTicks = tickValues(yMin, yMax, 6)
 
+  const previous = previousGenerations([...new Set(rows.map((row) => row.model))])
+  const colorOf = (model: string, provider: Row["provider"]) => seriesColor(model, provider, previous.has(model))
+
   const byModel = new Map<string, Row[]>()
   for (const row of rows) {
     const list = byModel.get(row.model)
@@ -91,7 +95,7 @@ export default function Chart({ rows, unit, scoreName, active, onHover, onPick }
         text: model,
         x: x + (anchor === "end" ? -10 : 10),
         y: yOf(top.score) - 8,
-        color: seriesColor(top.model, top.provider),
+        color: colorOf(top.model, top.provider),
         anchor,
       })
     }
@@ -127,7 +131,7 @@ export default function Chart({ rows, unit, scoreName, active, onHover, onPick }
   const emphasis = focus?.model ?? null
   const focusX = focus ? xOf(focus.cost) : null
   const focusY = focus ? yOf(focus.score) : null
-  const focusColor = focus ? seriesColor(focus.model, focus.provider) : null
+  const focusColor = focus ? colorOf(focus.model, focus.provider) : null
 
   return (
     <svg
@@ -188,7 +192,7 @@ export default function Chart({ rows, unit, scoreName, active, onHover, onPick }
         Cost per task
       </text>
       {[...byModel.entries()].map(([model, points]) => {
-        const color = seriesColor(model, points[0].provider)
+        const color = colorOf(model, points[0].provider)
         const hot = emphasis === model
         const dim = emphasis !== null && !hot
         const ordered = [...points].sort((a, b) => effortIndex(a.effort) - effortIndex(b.effort))

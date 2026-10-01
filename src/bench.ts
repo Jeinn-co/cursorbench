@@ -46,7 +46,7 @@ export const SOURCES: Record<
   },
 }
 
-export const APP_VERSION = "1.2.0"
+export const APP_VERSION = "1.3.0"
 
 export function providerById(id: ProviderId) {
   const found = PROVIDERS.find((item) => item.id === id)
@@ -54,10 +54,31 @@ export function providerById(id: ProviderId) {
   return found
 }
 
-export function seriesColor(model: string, provider: ProviderId) {
+const GPT_MODEL = /^GPT-(\d+)(?:\.(\d+))? (Astra|Sol|Terra|Luna)$/
+
+// GPT models drawn next to a newer version of the same line (e.g. GPT-5.6 Sol
+// beside GPT-6.1 Sol). They get a muted colour so the newest one stands out.
+export function previousGenerations(models: readonly string[]) {
+  const newest = new Map<string, number>()
+  const version = (match: RegExpMatchArray) => Number(match[1]) * 1000 + Number(match[2] ?? 0)
+  for (const model of models) {
+    const match = model.match(GPT_MODEL)
+    if (match) newest.set(match[3], Math.max(newest.get(match[3]) ?? 0, version(match)))
+  }
+  const previous = new Set<string>()
+  for (const model of models) {
+    const match = model.match(GPT_MODEL)
+    if (match && version(match) < (newest.get(match[3]) ?? 0)) previous.add(model)
+  }
+  return previous
+}
+
+export function seriesColor(model: string, provider: ProviderId, previous = false) {
+  if (previous) return "#64748b"
   if (model.startsWith("Opus")) return "#0ea5e9"
   if (model.startsWith("Sonnet")) return "#c4552a"
   if (model.startsWith("Fable")) return "#9a3412"
+  if (model.includes("Argon")) return "#1e3a8a"
   if (model.includes("Sol")) return "#059669"
   if (model.includes("Terra")) return "#d97706"
   if (model.includes("Astra")) return "#0f766e"

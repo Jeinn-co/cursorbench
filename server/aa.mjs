@@ -62,14 +62,21 @@ function objects(text, prefix) {
 const displayName = (name) => name.replace(/^Claude /, "")
 
 // Releases to show, as [{ slug, model }], picked from AA's full release list.
+// A release appears either as a release object (slug, name, releaseDate) or only
+// through its variants' `release` field, so both are read; a release counts once
+// any of them carries an index score.
 export function pickReleases(html) {
   const releases = new Map()
-  for (const release of objects(html, '\\{"slug":"[a-z0-9-]+","name":"[^"]+","releaseDate"')) {
-    if (release.intelligenceIndex == null || releases.has(release.slug)) continue
-    releases.set(release.slug, { slug: release.slug, model: displayName(release.name) })
+  for (const item of objects(html, '\\{"(?:id":"[0-9a-f-]+","slug|slug)":"[a-z0-9-]+"')) {
+    const release = item.release ?? (item.releaseDate && item.name ? item : null)
+    if (!release?.slug || !release.name) continue
+    const entry = releases.get(release.slug) ?? { slug: release.slug, model: displayName(release.name), scored: false }
+    if (item.intelligenceIndex != null) entry.scored = true
+    releases.set(release.slug, entry)
   }
-  const shown = shownModels([...releases.values()].map((release) => release.model))
-  return [...releases.values()].filter((release) => shown.has(release.model) && providerOf(release.model))
+  const scored = [...releases.values()].filter((release) => release.scored && providerOf(release.model))
+  const shown = shownModels(scored.map((release) => release.model))
+  return scored.filter((release) => shown.has(release.model)).map(({ slug, model }) => ({ slug, model }))
 }
 
 // One row per effort of a release, from its own variant objects only. A variant
