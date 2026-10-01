@@ -10,17 +10,35 @@ type Props = {
   onSetModels: (models: readonly string[], visible: boolean) => void
 }
 
-// Models of one provider, best score first, with how many points each has.
+// Menu order: by line (Opus, Sonnet, Fable; GPT Astra, Sol, Terra, Luna; ...), and
+// newest version first within a line, so the list does not reshuffle when scores move.
+const LINE_ORDER = ["Opus", "Sonnet", "Fable", "Astra", "Sol", "Terra", "Luna", "Grok", "Muse Spark", "Gemini Flash", "Gemini Argon"]
+
+function lineAndVersion(model: string) {
+  const gpt = model.match(/^GPT-(\d+(?:\.\d+)?) (\w+)$/)
+  const version = gpt ? gpt[1] : (model.match(/\d+(?:\.\d+)?/)?.[0] ?? "0")
+  const line = gpt ? gpt[2] : model.replace(version, "").replace(/\s+/g, " ").trim()
+  const [major, minor = "0"] = version.split(".")
+  return { line, version: Number(major) * 1000 + Number(minor) }
+}
+
+function compareModels(a: string, b: string) {
+  const x = lineAndVersion(a)
+  const y = lineAndVersion(b)
+  const rank = (line: string) => (LINE_ORDER.includes(line) ? LINE_ORDER.indexOf(line) : LINE_ORDER.length)
+  return rank(x.line) - rank(y.line) || x.line.localeCompare(y.line) || y.version - x.version
+}
+
+// Models of one provider in menu order, with how many points each has.
 function modelsOf(rows: Row[], provider: ProviderId) {
-  const byModel = new Map<string, { model: string; points: number; best: number }>()
+  const byModel = new Map<string, { model: string; points: number }>()
   for (const row of rows) {
     if (row.provider !== provider) continue
-    const entry = byModel.get(row.model) ?? { model: row.model, points: 0, best: -Infinity }
+    const entry = byModel.get(row.model) ?? { model: row.model, points: 0 }
     entry.points++
-    entry.best = Math.max(entry.best, row.score)
     byModel.set(row.model, entry)
   }
-  return [...byModel.values()].sort((a, b) => b.best - a.best)
+  return [...byModel.values()].sort((a, b) => compareModels(a.model, b.model))
 }
 
 export default function Legend({ rows, previous, hiddenProviders, hiddenModels, onToggleProvider, onSetModels }: Props) {

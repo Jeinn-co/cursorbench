@@ -51,7 +51,7 @@ Open the URL Vite prints (default http://localhost:5173).
 
 - **Source toggle:** switch between CursorBench and Artificial Analysis.
 - **Legend chips:** click to show or hide a CLI. The number is how many points it has, or shown/total when some models are unticked.
-- **▾ next to a chip:** tick or untick that CLI's models one by one, or all at once. Esc or a click outside closes it.
+- **▾ next to a chip:** tick or untick that CLI's models one by one, or all at once. Models are listed by line (Opus, Sonnet, Fable; GPT Astra, Sol, Terra, Luna; Gemini Flash, Argon), newest version first. Esc or a click outside closes it.
 - **Hover** a point to highlight its label, score, and cost.
 - **Click** a point to pin it. Click again to unpin.
 
@@ -102,6 +102,7 @@ Edit `KEEP`, `EXTRA` and `GPT_LINES` in [server/bench.mjs](server/bench.mjs), th
 
 ## Changelog
 
+- **1.5.1** (2026-10-02): The ▾ menu lists models by line and newest version first, instead of by score, so the order stays put when scores change.
 - **1.5.0** (2026-10-02): Dropped the newest-version-per-GPT-line rule. Every listed GPT Astra, Sol, Terra and Luna version is drawn (GPT-6 Sol and GPT-5.6 Luna now show on AA). Older versions are dark grey one step behind and light grey further back.
 - **1.4.0** (2026-10-01): A ▾ menu on each legend chip ticks that CLI's models one by one. The chip count shows shown/total when some are unticked.
 - **1.3.0** (2026-10-01): Fable 5.1, GPT-5.6 Sol and Gemini 4 Argon drawn on whichever source lists them. An older GPT shown beside a newer version of its line is grey. AA release discovery also reads releases that appear only through their variants.
