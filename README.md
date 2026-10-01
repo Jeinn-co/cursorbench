@@ -20,7 +20,7 @@ Hovering a point spotlights that model: the other lines fade, a crosshair marks 
 
 ![Demo: hover spotlights one model and dims the rest](docs/demo-hover.png)
 
-Each legend chip also has a ▾ menu to tick the models of that CLI one by one. Here GPT-5.6 Terra, GPT-6 Luna and GPT-5.6 Luna are unticked, so Codex shows 20 of its 35 points. The menu lists models by line and newest version first, the same order as the table above.
+Each legend chip also has a ▾ menu to tick the models of that CLI one by one. Here the older GPT-6 Sol, GPT-5.6 Sol and GPT-5.6 Luna are unticked, so Codex shows 20 of its 35 points. The screenshots on this page keep only the newest version of each line ticked. The menu lists models by line and newest version first, the same order as the table above.
 
 ![Demo: the model menu under a legend chip](docs/demo-menu.png)
 
