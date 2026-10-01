@@ -4,8 +4,8 @@ A small local viewer for the [CursorBench](https://cursor.com/cursorbench) leade
 
 | CLI         | Models shown                                   |
 | ----------- | ---------------------------------------------- |
-| Claude Code | Opus 5.5                                       |
-| Codex       | GPT-5.6 Sol, GPT-5.6 Terra (see below)         |
+| Claude Code | Opus 5.5, Sonnet 5.5                           |
+| Codex       | GPT-5.6 Sol, Terra, Luna (see below)           |
 | Grok        | Grok 4.7                                       |
 | Muse        | Muse Spark 1.3                                 |
 | Gemini      | Gemini 3.8 Flash                               |
@@ -18,11 +18,13 @@ Hovering a point spotlights that model: the other lines fade, a crosshair marks 
 
 ![Demo: hover spotlights one model and dims the rest](docs/demo-hover.png)
 
-Clicking a legend chip shows or hides that CLI. Here only Codex is visible, comparing GPT-5.6 Sol vs Terra across effort levels.
+Clicking a legend chip shows or hides that CLI. Here only Codex is visible, comparing GPT-5.6 Sol, Terra and Luna across effort levels.
 
 ![Demo: legend chips filter the chart to one CLI](docs/demo-filter.png)
 
-**GPT upgrade rule:** Codex starts with GPT-5.6 Sol and Terra. When the leaderboard lists GPT-6 Astra, Sol, or Terra, each one replaces its same-named 5.6 entry automatically. No code change is needed.
+**GPT upgrade rule:** Codex shows one entry per GPT line: Astra, Sol, Terra and Luna. Each line uses its newest version on the leaderboard, so GPT-6.1 Sol replaces GPT-6 Sol, which replaces GPT-5.6 Sol. A line appears once the leaderboard lists it. No code change is needed.
+
+As of 2026-10-01 the leaderboard has no GPT-6 models, so Codex still shows GPT-5.6. GPT-6 has no Terra line, so Terra stays on 5.6.
 
 ## Quick start
 

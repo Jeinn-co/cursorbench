@@ -24,7 +24,7 @@ export const PROVIDERS: readonly {
 
 export const SOURCE_URL = "https://cursor.com/cursorbench"
 
-export const APP_VERSION = "1.0.0"
+export const APP_VERSION = "1.1.0"
 
 export function providerById(id: ProviderId) {
   const found = PROVIDERS.find((item) => item.id === id)
@@ -34,9 +34,12 @@ export function providerById(id: ProviderId) {
 
 export function seriesColor(model: string, provider: ProviderId) {
   if (model.startsWith("Opus")) return "#0ea5e9"
+  if (model.startsWith("Sonnet")) return "#c4552a"
+  if (model.startsWith("Fable")) return "#9a3412"
   if (model.includes("Sol")) return "#059669"
   if (model.includes("Terra")) return "#d97706"
   if (model.includes("Astra")) return "#0f766e"
+  if (model.includes("Luna")) return "#65a30d"
   return providerById(provider).color
 }
 

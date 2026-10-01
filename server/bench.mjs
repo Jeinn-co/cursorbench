@@ -23,27 +23,42 @@ function splitLabel(label) {
   return { model: label, effort: null }
 }
 
-const KEEP = new Set(["Opus 5.5", "Grok 4.7", "Muse Spark 1.3", "Gemini 3.8 Flash"])
-const GPT_LINES = ["Astra", "Sol", "Terra"]
+const KEEP = new Set(["Opus 5.5", "Sonnet 5.5", "Grok 4.7", "Muse Spark 1.3", "Gemini 3.8 Flash"])
+const GPT_LINES = ["Astra", "Sol", "Terra", "Luna"]
+const GPT_MODEL = /^GPT-(\d+(?:\.\d+)?) (Astra|Sol|Terra|Luna)$/
 
 function providerOf(model) {
-  if (/^(Opus|Fable) /.test(model)) return "claude"
-  if (/^GPT-(?:6|5\.6) (Astra|Sol|Terra)$/.test(model)) return "codex"
+  if (/^(Opus|Sonnet|Fable) /.test(model)) return "claude"
+  if (GPT_MODEL.test(model)) return "codex"
   if (model.startsWith("Grok ")) return "grok"
   if (model.startsWith("Muse ")) return "muse"
   if (model.startsWith("Gemini ")) return "gemini"
   return null
 }
 
+// "6.1" -> [6, 1], "6" -> [6, 0]
+function versionParts(version) {
+  const [major, minor = "0"] = version.split(".")
+  return [Number(major), Number(minor)]
+}
+
+function newerVersion(a, b) {
+  const [aMajor, aMinor] = versionParts(a)
+  const [bMajor, bMinor] = versionParts(b)
+  return aMajor !== bMajor ? aMajor > bMajor : aMinor > bMinor
+}
+
+// Each GPT line (Astra, Sol, Terra, Luna) shows only its newest listed version,
+// so GPT-6.1 Sol replaces GPT-6 Sol, which replaces GPT-5.6 Sol.
 export function selectRows(rows) {
-  const present = new Set(rows.map((row) => row.model))
-  const gpt = new Set(
-    GPT_LINES.map((line) => {
-      if (present.has(`GPT-6 ${line}`)) return `GPT-6 ${line}`
-      if (present.has(`GPT-5.6 ${line}`)) return `GPT-5.6 ${line}`
-      return null
-    }).filter(Boolean),
-  )
+  const newest = new Map()
+  for (const { model } of rows) {
+    const match = model.match(GPT_MODEL)
+    if (!match || !GPT_LINES.includes(match[2])) continue
+    const current = newest.get(match[2])
+    if (!current || newerVersion(match[1], current.version)) newest.set(match[2], { version: match[1], model })
+  }
+  const gpt = new Set([...newest.values()].map((entry) => entry.model))
   return rows.filter((row) => KEEP.has(row.model) || gpt.has(row.model))
 }
 

@@ -55,9 +55,9 @@ export default function App() {
           <h1>Five CLIs</h1>
         </div>
         <p className="deck">
-          Score vs. cost per task. Cheaper is further right. Pinned to Opus 5.5, Grok 4.7, Muse Spark 1.3, and Gemini 3.8
-          Flash. GPT starts with 5.6 Sol and Terra. When this page lists GPT-6 Astra, Sol, or Terra, each replaces its 5.6
-          counterpart.
+          Score vs. cost per task. Cheaper is further right. Pinned to Opus 5.5, Sonnet 5.5, Grok 4.7, Muse Spark 1.3, and
+          Gemini 3.8 Flash. Each GPT line (Astra, Sol, Terra, Luna) shows its newest listed version, so GPT-6.1 Sol would
+          replace GPT-6 Sol, which replaces GPT-5.6 Sol.
         </p>
       </header>
 
