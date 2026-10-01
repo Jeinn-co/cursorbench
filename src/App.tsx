@@ -14,10 +14,38 @@ function initialSource(): SourceId {
   return new URLSearchParams(window.location.search).get("source") === "aa" ? "aa" : "cursorbench"
 }
 
+// The chip switches and the menu ticks are remembered in this browser only. Storage
+// can be missing or blocked (private window, preview), so every access is guarded.
+const STORAGE_KEY = "cursorbench:visibility"
+
+function loadVisibility(): { providers: string[]; models: string[] } {
+  try {
+    const data = JSON.parse(window.localStorage.getItem(STORAGE_KEY) ?? "{}")
+    return {
+      providers: Array.isArray(data.providers) ? data.providers : [],
+      models: Array.isArray(data.models) ? data.models : [],
+    }
+  } catch {
+    return { providers: [], models: [] }
+  }
+}
+
+function saveVisibility(providers: ReadonlySet<ProviderId>, models: ReadonlySet<string>) {
+  try {
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ providers: [...providers], models: [...models] }))
+  } catch {
+    // Not remembered this time; the page still works.
+  }
+}
+
 export default function App() {
   const [source, setSource] = useState<SourceId>(initialSource)
-  const [hidden, setHidden] = useState<ReadonlySet<ProviderId>>(() => new Set())
-  const [hiddenModels, setHiddenModels] = useState<ReadonlySet<string>>(() => new Set())
+  const [hidden, setHidden] = useState<ReadonlySet<ProviderId>>(
+    () => new Set(loadVisibility().providers as ProviderId[]),
+  )
+  const [hiddenModels, setHiddenModels] = useState<ReadonlySet<string>>(() => new Set(loadVisibility().models))
+
+  useEffect(() => saveVisibility(hidden, hiddenModels), [hidden, hiddenModels])
   const [rows, setRows] = useState<Row[]>([])
   const [error, setError] = useState<string | null>(null)
   const [hover, setHover] = useState<string | null>(null)
@@ -61,20 +89,14 @@ export default function App() {
   const previous = useMemo(() => previousGenerations([...new Set(rows.map((row) => row.model))]), [rows])
   const active = pinned ?? hover
 
-  // A chip is off when its provider is hidden or every one of its models is unticked;
-  // turning it back on shows the provider with all of its models.
+  // The chip only switches the whole CLI on or off; the ticks in its menu are kept.
   const toggle = (id: ProviderId) => {
-    const models = [...new Set(rows.filter((row) => row.provider === id).map((row) => row.model))]
-    const off = hidden.has(id) || models.every((model) => hiddenModels.has(model))
     setHidden((current) => {
       const next = new Set(current)
-      if (off) next.delete(id)
+      if (next.has(id)) next.delete(id)
       else next.add(id)
       return next
     })
-    if (off) {
-      setHiddenModels((current) => new Set([...current].filter((model) => !models.includes(model))))
-    }
     setPinned(null)
   }
 

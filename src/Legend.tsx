@@ -70,7 +70,7 @@ export default function Legend({ rows, previous, hiddenProviders, hiddenModels, 
         const total = models.reduce((sum, item) => sum + item.points, 0)
         const shown = models.filter((item) => !hiddenModels.has(item.model))
         const shownPoints = shown.reduce((sum, item) => sum + item.points, 0)
-        const off = hiddenProviders.has(provider.id) || shown.length === 0
+        const off = hiddenProviders.has(provider.id)
         const isOpen = open === provider.id
         return (
           <div key={provider.id} className={isOpen ? "chip-group open" : "chip-group"}>
