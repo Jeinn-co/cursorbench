@@ -1,13 +1,14 @@
 import { useEffect, useMemo, useState } from "react"
 import {
   APP_VERSION,
-  PROVIDERS,
   SOURCES,
+  previousGenerations,
   type ProviderId,
   type Row,
   type SourceId,
 } from "./bench"
 import Chart from "./Chart"
+import Legend from "./Legend"
 
 function initialSource(): SourceId {
   return new URLSearchParams(window.location.search).get("source") === "aa" ? "aa" : "cursorbench"
@@ -16,6 +17,7 @@ function initialSource(): SourceId {
 export default function App() {
   const [source, setSource] = useState<SourceId>(initialSource)
   const [hidden, setHidden] = useState<ReadonlySet<ProviderId>>(() => new Set())
+  const [hiddenModels, setHiddenModels] = useState<ReadonlySet<string>>(() => new Set())
   const [rows, setRows] = useState<Row[]>([])
   const [error, setError] = useState<string | null>(null)
   const [hover, setHover] = useState<string | null>(null)
@@ -52,18 +54,43 @@ export default function App() {
   const meta = SOURCES[source]
 
   const visible = useMemo(
-    () => rows.filter((row) => !hidden.has(row.provider)),
-    [rows, hidden],
+    () => rows.filter((row) => !hidden.has(row.provider) && !hiddenModels.has(row.model)),
+    [rows, hidden, hiddenModels],
   )
+  // Grey marks an older GPT beside a newer one in this source, even when the newer is unticked.
+  const previous = useMemo(() => previousGenerations([...new Set(rows.map((row) => row.model))]), [rows])
   const active = pinned ?? hover
 
+  // A chip is off when its provider is hidden or every one of its models is unticked;
+  // turning it back on shows the provider with all of its models.
   const toggle = (id: ProviderId) => {
+    const models = [...new Set(rows.filter((row) => row.provider === id).map((row) => row.model))]
+    const off = hidden.has(id) || models.every((model) => hiddenModels.has(model))
     setHidden((current) => {
       const next = new Set(current)
-      if (next.has(id)) next.delete(id)
+      if (off) next.delete(id)
       else next.add(id)
       return next
     })
+    if (off) {
+      setHiddenModels((current) => new Set([...current].filter((model) => !models.includes(model))))
+    }
+    setPinned(null)
+  }
+
+  const setModels = (models: readonly string[], show: boolean) => {
+    setHiddenModels((current) => {
+      const next = new Set(current)
+      for (const model of models) {
+        if (show) next.delete(model)
+        else next.add(model)
+      }
+      return next
+    })
+    if (show) {
+      const providers = new Set(rows.filter((row) => models.includes(row.model)).map((row) => row.provider))
+      setHidden((current) => new Set([...current].filter((id) => !providers.has(id))))
+    }
     setPinned(null)
   }
 
@@ -98,33 +125,21 @@ export default function App() {
         ))}
       </div>
 
-      <div className="legend" role="group" aria-label="Visible providers">
-        {PROVIDERS.map((provider) => {
-          const count = rows.filter((row) => row.provider === provider.id).length
-          if (count === 0) return null
-          const off = hidden.has(provider.id)
-          return (
-            <button
-              key={provider.id}
-              type="button"
-              className={off ? "chip off" : "chip"}
-              aria-pressed={!off}
-              onClick={() => toggle(provider.id)}
-            >
-              <span className="swatch" style={{ background: provider.color }} />
-              {provider.name}
-              <span className="count">{count}</span>
-            </button>
-          )
-        })}
-      </div>
+      <Legend
+        rows={rows}
+        previous={previous}
+        hiddenProviders={hidden}
+        hiddenModels={hiddenModels}
+        onToggleProvider={toggle}
+        onSetModels={setModels}
+      />
 
       {error ? (
         <p className="empty">Could not load this page ({error}).</p>
       ) : rows.length === 0 ? (
         <p className="empty">Loading {meta.name}…</p>
       ) : (
-        <Chart rows={visible} unit={meta.unit} scoreName={meta.scoreName} active={active} onHover={setHover} onPick={(label) => setPinned((current) => (current === label ? null : label))} />
+        <Chart rows={visible} previous={previous} unit={meta.unit} scoreName={meta.scoreName} active={active} onHover={setHover} onPick={(label) => setPinned((current) => (current === label ? null : label))} />
       )}
 
       <p className="foot">

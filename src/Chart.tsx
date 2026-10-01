@@ -4,7 +4,6 @@ import {
   formatCostTick,
   formatScore,
   niceCeil,
-  previousGenerations,
   seriesColor,
   tickValues,
   type Row,
@@ -24,6 +23,7 @@ type Label = {
 
 type Props = {
   rows: Row[]
+  previous: ReadonlySet<string>
   unit: string
   scoreName: string
   active: string | null
@@ -38,7 +38,7 @@ function effortIndex(effort: string | null) {
   return index === -1 ? 98 : index
 }
 
-export default function Chart({ rows, unit, scoreName, active, onHover, onPick }: Props) {
+export default function Chart({ rows, previous, unit, scoreName, active, onHover, onPick }: Props) {
   const [narrow, setNarrow] = useState(
     () => typeof window !== "undefined" && window.matchMedia("(max-width: 720px)").matches,
   )
@@ -74,7 +74,6 @@ export default function Chart({ rows, unit, scoreName, active, onHover, onPick }
   const xTicks = tickValues(0, xMax, 6)
   const yTicks = tickValues(yMin, yMax, 6)
 
-  const previous = previousGenerations([...new Set(rows.map((row) => row.model))])
   const colorOf = (model: string, provider: Row["provider"]) => seriesColor(model, provider, previous.has(model))
 
   const byModel = new Map<string, Row[]>()

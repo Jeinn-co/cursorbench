@@ -122,6 +122,76 @@ h1 {
   opacity: 0.4;
 }
 
+.chip-group {
+  position: relative;
+  display: inline-flex;
+}
+
+.chip-group .chip {
+  border-radius: 999px 0 0 999px;
+  border-right: 0;
+}
+
+.chip-caret {
+  padding: 0 10px 0 6px;
+  border: 1px solid var(--line);
+  border-left: 1px solid var(--line);
+  border-radius: 0 999px 999px 0;
+  background: #fff;
+  color: var(--muted);
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+}
+
+.chip-group.open .chip,
+.chip-group.open .chip-caret {
+  border-color: #1a73c7;
+}
+
+.chip-caret:focus-visible {
+  outline: 2px solid #1a73c7;
+  outline-offset: 2px;
+}
+
+.menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 10;
+  min-width: 220px;
+  padding: 6px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 8px 24px rgb(23 35 46 / 12%);
+}
+
+.menu-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.menu-row:hover {
+  background: var(--sheet);
+}
+
+.menu-all {
+  margin-bottom: 4px;
+  border-bottom: 1px solid var(--line);
+  border-radius: 6px 6px 0 0;
+  color: var(--muted);
+}
+
+.menu-name {
+  flex: 1;
+}
+
 .chip:focus-visible,
 .axis-btn:focus-visible,
 .sort:focus-visible,

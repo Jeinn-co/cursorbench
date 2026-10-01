@@ -20,6 +20,10 @@ Hovering a point spotlights that model: the other lines fade, a crosshair marks 
 
 ![Demo: hover spotlights one model and dims the rest](docs/demo-hover.png)
 
+Each legend chip also has a ▾ menu to tick the models of that CLI one by one. Here GPT-5.6 Terra and GPT-6 Luna are unticked, so Codex shows 15 of its 25 points.
+
+![Demo: the model menu under a legend chip](docs/demo-menu.png)
+
 Clicking a legend chip shows or hides that CLI. Here only Codex is visible, comparing GPT-5.6 Sol, Terra and Luna across effort levels.
 
 ![Demo: legend chips filter the chart to one CLI](docs/demo-filter.png)
@@ -46,7 +50,8 @@ Open the URL Vite prints (default http://localhost:5173).
 ## Using the chart
 
 - **Source toggle:** switch between CursorBench and Artificial Analysis.
-- **Legend chips:** click to show or hide a CLI. The number is how many points it has.
+- **Legend chips:** click to show or hide a CLI. The number is how many points it has, or shown/total when some models are unticked.
+- **▾ next to a chip:** tick or untick that CLI's models one by one, or all at once. Esc or a click outside closes it.
 - **Hover** a point to highlight its label, score, and cost.
 - **Click** a point to pin it. Click again to unpin.
 
@@ -85,7 +90,8 @@ The Artificial Analysis source (`/api/bench?source=aa`, in [server/aa.mjs](serve
 ```
 server/bench.mjs   CursorBench scraper, model filter, cache, and the /api/bench Vite plugin
 server/aa.mjs      Artificial Analysis source (release pages, per-effort rows, cache)
-src/App.tsx        Page layout, source toggle, legend chips, data loading
+src/App.tsx        Page layout, source toggle, data loading, visibility state
+src/Legend.tsx     Legend chips and the per-CLI model menu
 src/Chart.tsx      SVG scatter/line chart (score vs. cost)
 src/bench.ts       Shared types, provider colors, formatting helpers
 ```
@@ -96,6 +102,7 @@ Edit `KEEP`, `EXTRA` and `GPT_LINES` in [server/bench.mjs](server/bench.mjs), th
 
 ## Changelog
 
+- **1.4.0** (2026-10-01): A ▾ menu on each legend chip ticks that CLI's models one by one. The chip count shows shown/total when some are unticked.
 - **1.3.0** (2026-10-01): Fable 5.1, GPT-5.6 Sol and Gemini 4 Argon drawn on whichever source lists them. An older GPT shown beside a newer version of its line is grey. AA release discovery also reads releases that appear only through their variants.
 - **1.2.0** (2026-10-01): Data source toggle between CursorBench and the Artificial Analysis Intelligence Index (`?source=aa`), so GPT-6.1 Sol, GPT-6 Astra and GPT-6 Luna can be seen before CursorBench lists them. AA rows are read per release and per effort, never borrowed from a neighbouring model.
 - **1.1.0** (2026-10-01): Each GPT line shows its newest listed version (GPT-6.1 Sol replaces GPT-6 Sol, which replaces GPT-5.6 Sol). Added Sonnet 5.5 and GPT-5.6 Luna.
