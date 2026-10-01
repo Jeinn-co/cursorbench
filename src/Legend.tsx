@@ -3,7 +3,7 @@ import { PROVIDERS, seriesColor, type ProviderId, type Row } from "./bench"
 
 type Props = {
   rows: Row[]
-  previous: ReadonlySet<string>
+  previous: ReadonlyMap<string, number>
   hiddenProviders: ReadonlySet<ProviderId>
   hiddenModels: ReadonlySet<string>
   onToggleProvider: (id: ProviderId) => void
@@ -97,7 +97,7 @@ export default function Legend({ rows, previous, hiddenProviders, hiddenModels, 
                     />
                     <span
                       className="swatch"
-                      style={{ background: seriesColor(item.model, provider.id, previous.has(item.model)) }}
+                      style={{ background: seriesColor(item.model, provider.id, previous.get(item.model)) }}
                     />
                     <span className="menu-name">{item.model}</span>
                     <span className="count">{item.points}</span>

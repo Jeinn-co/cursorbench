@@ -23,7 +23,7 @@ type Label = {
 
 type Props = {
   rows: Row[]
-  previous: ReadonlySet<string>
+  previous: ReadonlyMap<string, number>
   unit: string
   scoreName: string
   active: string | null
@@ -74,7 +74,7 @@ export default function Chart({ rows, previous, unit, scoreName, active, onHover
   const xTicks = tickValues(0, xMax, 6)
   const yTicks = tickValues(yMin, yMax, 6)
 
-  const colorOf = (model: string, provider: Row["provider"]) => seriesColor(model, provider, previous.has(model))
+  const colorOf = (model: string, provider: Row["provider"]) => seriesColor(model, provider, previous.get(model))
 
   const byModel = new Map<string, Row[]>()
   for (const row of rows) {

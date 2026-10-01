@@ -46,7 +46,7 @@ export const SOURCES: Record<
   },
 }
 
-export const APP_VERSION = "1.4.0"
+export const APP_VERSION = "1.5.0"
 
 export function providerById(id: ProviderId) {
   const found = PROVIDERS.find((item) => item.id === id)
@@ -56,25 +56,29 @@ export function providerById(id: ProviderId) {
 
 const GPT_MODEL = /^GPT-(\d+)(?:\.(\d+))? (Astra|Sol|Terra|Luna)$/
 
-// GPT models drawn next to a newer version of the same line (e.g. GPT-5.6 Sol
-// beside GPT-6.1 Sol). They get a muted colour so the newest one stands out.
+// How many versions behind the newest of its GPT line each older GPT model is
+// (GPT-6 Sol is 1 behind GPT-6.1 Sol, GPT-5.6 Sol is 2). Older ones get grey so the
+// newest stands out.
 export function previousGenerations(models: readonly string[]) {
-  const newest = new Map<string, number>()
+  const versions = new Map<string, number[]>()
   const version = (match: RegExpMatchArray) => Number(match[1]) * 1000 + Number(match[2] ?? 0)
   for (const model of models) {
     const match = model.match(GPT_MODEL)
-    if (match) newest.set(match[3], Math.max(newest.get(match[3]) ?? 0, version(match)))
+    if (match) versions.set(match[3], [...(versions.get(match[3]) ?? []), version(match)])
   }
-  const previous = new Set<string>()
+  const behind = new Map<string, number>()
   for (const model of models) {
     const match = model.match(GPT_MODEL)
-    if (match && version(match) < (newest.get(match[3]) ?? 0)) previous.add(model)
+    if (!match) continue
+    const newer = new Set((versions.get(match[3]) ?? []).filter((value) => value > version(match))).size
+    if (newer > 0) behind.set(model, newer)
   }
-  return previous
+  return behind
 }
 
-export function seriesColor(model: string, provider: ProviderId, previous = false) {
-  if (previous) return "#64748b"
+export function seriesColor(model: string, provider: ProviderId, behind = 0) {
+  if (behind === 1) return "#64748b"
+  if (behind > 1) return "#a3afbd"
   if (model.startsWith("Opus")) return "#0ea5e9"
   if (model.startsWith("Sonnet")) return "#c4552a"
   if (model.startsWith("Fable")) return "#9a3412"

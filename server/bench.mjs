@@ -25,9 +25,8 @@ function splitLabel(label) {
 }
 
 const KEEP = new Set(["Opus 5.5", "Sonnet 5.5", "Grok 4.7", "Muse Spark 1.3", "Gemini 3.8 Flash"])
-// Shown on top of the newest-per-line rule, on whichever source lists them: models
-// worth tracking outside the pinned set, and a previous GPT generation to compare.
-const EXTRA = new Set(["Fable 5.1", "GPT-5.6 Sol", "Gemini 4 Argon"])
+// Shown on top of the pinned models, on whichever source lists them.
+const EXTRA = new Set(["Fable 5.1", "Gemini 4 Argon"])
 const GPT_LINES = ["Astra", "Sol", "Terra", "Luna"]
 const GPT_MODEL = /^GPT-(\d+(?:\.\d+)?) (Astra|Sol|Terra|Luna)$/
 
@@ -40,31 +39,16 @@ export function providerOf(model) {
   return null
 }
 
-// "6.1" -> [6, 1], "6" -> [6, 0]
-function versionParts(version) {
-  const [major, minor = "0"] = version.split(".")
-  return [Number(major), Number(minor)]
-}
-
-function newerVersion(a, b) {
-  const [aMajor, aMinor] = versionParts(a)
-  const [bMajor, bMinor] = versionParts(b)
-  return aMajor !== bMajor ? aMajor > bMajor : aMinor > bMinor
-}
-
-// Which of the given model names are shown: the pinned models, the extras, plus
-// each GPT line (Astra, Sol, Terra, Luna) at its newest listed version, so GPT-6.1
-// Sol replaces GPT-6 Sol. Shared by the CursorBench and AA sources.
+// Which of the given model names are shown: the pinned models, the extras, and
+// every listed version of each GPT line (Astra, Sol, Terra, Luna). Shared by the
+// CursorBench and AA sources.
 export function shownModels(models) {
-  const newest = new Map()
-  for (const model of models) {
-    const match = model.match(GPT_MODEL)
-    if (!match || !GPT_LINES.includes(match[2])) continue
-    const current = newest.get(match[2])
-    if (!current || newerVersion(match[1], current.version)) newest.set(match[2], { version: match[1], model })
-  }
-  const gpt = [...newest.values()].map((entry) => entry.model)
-  return new Set([...models.filter((model) => KEEP.has(model) || EXTRA.has(model)), ...gpt])
+  return new Set(
+    models.filter((model) => {
+      const gpt = model.match(GPT_MODEL)
+      return KEEP.has(model) || EXTRA.has(model) || (gpt !== null && GPT_LINES.includes(gpt[2]))
+    }),
+  )
 }
 
 export function selectRows(rows) {
