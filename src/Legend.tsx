@@ -11,14 +11,14 @@ type Props = {
 }
 
 // Menu order: by line (Fable, Opus, Sonnet; GPT Astra, Sol, Terra, Luna; Grok, Grok Build;
-// Muse Spark, Glimmer; Gemini Argon, Pro, Flash, Flash-Lite), and newest version first within a
+// Muse Spark, Glimmer; Gemini Argon, Flash, Flash-Lite, Pro), and newest version first within a
 // line, so the list does not reshuffle when scores move.
 const LINE_ORDER = [
   "Fable", "Opus", "Sonnet",
   "Astra", "Sol", "Terra", "Luna",
   "Grok", "Grok Build",
   "Muse Spark", "Muse Glimmer",
-  "Gemini Argon", "Gemini Pro Preview", "Gemini Flash", "Gemini Flash-Lite",
+  "Gemini Argon", "Gemini Flash", "Gemini Flash-Lite", "Gemini Pro Preview",
 ]
 
 function compareModels(a: string, b: string) {

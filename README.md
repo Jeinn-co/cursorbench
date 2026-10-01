@@ -8,7 +8,7 @@ A small local viewer for the [CursorBench](https://cursor.com/cursorbench) leade
 | Codex       | GPT Astra, Sol, Terra, Luna                               |
 | Grok        | Grok, Grok Build                                          |
 | Muse        | Muse Spark, Muse Glimmer                                  |
-| Gemini      | Gemini Argon, Pro, Flash, Flash-Lite                      |
+| Gemini      | Gemini Argon, Flash, Flash-Lite, Pro                      |
 
 Every effort level listed on CursorBench (Minimal → Max) appears as its own point, and each model's points are connected into one line.
 
@@ -51,7 +51,7 @@ Open the URL Vite prints (default http://localhost:5173).
 
 - **Source toggle:** switch between CursorBench and Artificial Analysis.
 - **Legend chips:** an on/off switch for a whole CLI. Turning it off and on again keeps the models you ticked in its menu. The number is how many points it has, or shown/total when some models are unticked.
-- **▾ next to a chip:** tick or untick that CLI's models one by one, or all at once. Models are listed by line (Fable, Opus, Sonnet; GPT Astra, Sol, Terra, Luna; Grok, Grok Build; Muse Spark, Glimmer; Gemini Argon, Pro, Flash, Flash-Lite), newest version first. Esc or a click outside closes it.
+- **▾ next to a chip:** tick or untick that CLI's models one by one, or all at once. Models are listed by line (Fable, Opus, Sonnet; GPT Astra, Sol, Terra, Luna; Grok, Grok Build; Muse Spark, Glimmer; Gemini Argon, Flash, Flash-Lite, Pro), newest version first. Esc or a click outside closes it.
 - **Remembered:** chip switches and menu ticks are saved in this browser (localStorage), so a reload or the next visit keeps them. They apply to both sources.
 - **Hover** a point to highlight its label, score, and cost.
 - **Click** a point to pin it. Click again to unpin.
@@ -103,6 +103,7 @@ Which providers count is `providerOf` in [server/bench.mjs](server/bench.mjs); t
 
 ## Changelog
 
+- **1.7.2** (2026-10-02): In the Gemini menu, Pro comes after Flash-Lite, so both Gemini 3.1 models sit at the bottom.
 - **1.7.1** (2026-10-02): Screenshots keep only the newest version of each line ticked, and the menu caption says which older versions are unticked.
 - **1.7.0** (2026-10-02): Every model of the five CLIs is drawn, every version of every line (AA: releases from the last 240 days). The older-is-grey rule and the newest-first menu order now cover every line, not only GPT. Versions compare as decimals (Grok 4.20 below 4.7). Gemini 3.1 Pro Preview, a reasoning variant without an effort level, shows as one point.
 - **1.6.0** (2026-10-02): Chip switches and menu ticks are remembered in the browser. A chip is now only an on/off switch: turning a CLI back on keeps the models ticked in its menu instead of ticking them all.
