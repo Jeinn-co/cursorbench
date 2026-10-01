@@ -46,7 +46,7 @@ export const SOURCES: Record<
   },
 }
 
-export const APP_VERSION = "1.7.2"
+export const APP_VERSION = "1.8.0"
 
 export function providerById(id: ProviderId) {
   const found = PROVIDERS.find((item) => item.id === id)
@@ -86,22 +86,32 @@ export function previousGenerations(models: readonly string[]) {
   return behind
 }
 
+// One hue per CLI (its chip colour), one shade per line within it: darkest for the
+// flagship line, lightest for the small one. A colour tells you the CLI at a glance.
+const LINE_COLOR: Record<string, string> = {
+  Fable: "#8a3a1c", Opus: "#c4552a", Sonnet: "#e08a5a",
+  Astra: "#0a5c4a", Sol: "#0c8f72", Terra: "#3fb08f", Luna: "#86cfb4",
+  Grok: "#1a1a1a", "Grok Build": "#6b6b6b",
+  "Muse Spark": "#5b4db7", "Muse Glimmer": "#9d92e3",
+  "Gemini Argon": "#0b3d91", "Gemini Pro Preview": "#3b5bd9", "Gemini Flash": "#1a73c7", "Gemini Flash-Lite": "#6eaaf0",
+}
+
+// Share of white mixed in per step behind the newest version of a line: the older, the
+// paler, so faded lines still read as their CLI's colour.
+const FADE = [0, 0.35, 0.55, 0.7, 0.8]
+
+function fade(hex: string, behind: number) {
+  const t = FADE[Math.min(Math.max(behind, 0), FADE.length - 1)]
+  if (!t) return hex
+  const channel = (i: number) => {
+    const value = parseInt(hex.slice(1 + i * 2, 3 + i * 2), 16)
+    return Math.round(value + (255 - value) * t).toString(16).padStart(2, "0")
+  }
+  return `#${channel(0)}${channel(1)}${channel(2)}`
+}
+
 export function seriesColor(model: string, provider: ProviderId, behind = 0) {
-  if (behind === 1) return "#64748b"
-  if (behind > 1) return "#a3afbd"
-  if (model.startsWith("Opus")) return "#0ea5e9"
-  if (model.startsWith("Sonnet")) return "#c4552a"
-  if (model.startsWith("Fable")) return "#9a3412"
-  if (model.includes("Argon")) return "#1e3a8a"
-  if (model.includes("Flash-Lite")) return "#60a5fa"
-  if (model.includes(" Pro")) return "#4338ca"
-  if (model.startsWith("Grok Build")) return "#78716c"
-  if (model.startsWith("Muse Glimmer")) return "#a855f7"
-  if (model.includes("Sol")) return "#059669"
-  if (model.includes("Terra")) return "#d97706"
-  if (model.includes("Astra")) return "#0f766e"
-  if (model.includes("Luna")) return "#65a30d"
-  return providerById(provider).color
+  return fade(LINE_COLOR[modelLine(model).line] ?? providerById(provider).color, behind)
 }
 
 export function formatScore(score: number, unit = "%") {

@@ -126,7 +126,7 @@ export default function App() {
         <p className="deck">
           Score vs. cost per task. Cheaper is further right. Every model the source lists for these five CLIs is drawn,
           every version of every line (Artificial Analysis: releases from the last eight months). The newest version of a
-          line keeps its colour; older ones are grey, lighter the older they are. Use ▾ on a chip to untick models.
+          line keeps its colour; older ones fade, paler the older they are. Each CLI has one colour family. Use ▾ on a chip to untick models.
           {source === "aa"
             ? " AA scores a general intelligence index on another test set; do not compare them with CursorBench percentages."
             : null}

@@ -10,9 +10,9 @@ type Props = {
   onSetModels: (models: readonly string[], visible: boolean) => void
 }
 
-// Menu order: by line (Fable, Opus, Sonnet; GPT Astra, Sol, Terra, Luna; Grok, Grok Build;
-// Muse Spark, Glimmer; Gemini Argon, Flash, Flash-Lite, Pro), and newest version first within a
-// line, so the list does not reshuffle when scores move.
+// Menu order, newest generation first so older ones sink to the bottom; it does not
+// reshuffle when scores move. Line order breaks ties: Fable, Opus, Sonnet; GPT Astra, Sol,
+// Terra, Luna; Grok, Grok Build; Muse Spark, Glimmer; Gemini Argon, Flash, Flash-Lite, Pro.
 const LINE_ORDER = [
   "Fable", "Opus", "Sonnet",
   "Astra", "Sol", "Terra", "Luna",
@@ -21,15 +21,29 @@ const LINE_ORDER = [
   "Gemini Argon", "Gemini Flash", "Gemini Flash-Lite", "Gemini Pro Preview",
 ]
 
-function compareModels(a: string, b: string) {
+const rank = (line: string) => (LINE_ORDER.includes(line) ? LINE_ORDER.indexOf(line) : LINE_ORDER.length)
+
+// Gemini numbers every line on one shared track, so the higher number is the newer
+// generation (both Gemini 3.1 models sit at the bottom). Claude and GPT lines each step on
+// their own, so a generation is the major version, then how many versions a model trails
+// the newest of its line: Fable 5.1, Opus 5.5, Sonnet 5.5, then Fable 5, Opus 5, Sonnet 5,
+// then Opus 4.8, Sonnet 4.6.
+function compareModels(a: string, b: string, provider: ProviderId, behind: ReadonlyMap<string, number>) {
   const x = modelLine(a)
   const y = modelLine(b)
-  const rank = (line: string) => (LINE_ORDER.includes(line) ? LINE_ORDER.indexOf(line) : LINE_ORDER.length)
-  return rank(x.line) - rank(y.line) || x.line.localeCompare(y.line) || y.version - x.version || b.localeCompare(a)
+  if (provider === "gemini") return y.version - x.version || rank(x.line) - rank(y.line) || b.localeCompare(a)
+  return (
+    Math.floor(y.version) - Math.floor(x.version) ||
+    (behind.get(a) ?? 0) - (behind.get(b) ?? 0) ||
+    rank(x.line) - rank(y.line) ||
+    x.line.localeCompare(y.line) ||
+    y.version - x.version ||
+    b.localeCompare(a)
+  )
 }
 
 // Models of one provider in menu order, with how many points each has.
-function modelsOf(rows: Row[], provider: ProviderId) {
+function modelsOf(rows: Row[], provider: ProviderId, behind: ReadonlyMap<string, number>) {
   const byModel = new Map<string, { model: string; points: number }>()
   for (const row of rows) {
     if (row.provider !== provider) continue
@@ -37,7 +51,7 @@ function modelsOf(rows: Row[], provider: ProviderId) {
     entry.points++
     byModel.set(row.model, entry)
   }
-  return [...byModel.values()].sort((a, b) => compareModels(a.model, b.model))
+  return [...byModel.values()].sort((a, b) => compareModels(a.model, b.model, provider, behind))
 }
 
 export default function Legend({ rows, previous, hiddenProviders, hiddenModels, onToggleProvider, onSetModels }: Props) {
@@ -63,7 +77,7 @@ export default function Legend({ rows, previous, hiddenProviders, hiddenModels, 
   return (
     <div className="legend" role="group" aria-label="Visible providers" ref={ref}>
       {PROVIDERS.map((provider) => {
-        const models = modelsOf(rows, provider.id)
+        const models = modelsOf(rows, provider.id, previous)
         if (models.length === 0) return null
         const total = models.reduce((sum, item) => sum + item.points, 0)
         const shown = models.filter((item) => !hiddenModels.has(item.model))
