@@ -26,6 +26,10 @@ Clicking a legend chip shows or hides that CLI. Here only Codex is visible, comp
 
 As of 2026-10-01 the leaderboard has no GPT-6 models, so Codex still shows GPT-5.6. GPT-6 has no Terra line, so Terra stays on 5.6.
 
+**Data source switch:** the toggle above the legend swaps CursorBench for the [Artificial Analysis](https://artificialanalysis.ai/models/releases) Intelligence Index, using the same models and the same GPT rule. AA already lists GPT-6.1 Sol, GPT-6 Astra and GPT-6 Luna. Its score is a general intelligence index on a different test set, so read it on its own and do not compare it with CursorBench percentages. AA scores fewer efforts for some models (Grok 4.7 and Muse Spark 1.3 have two each). The choice is kept in the URL as `?source=aa`.
+
+![Demo: the same chart on the Artificial Analysis Intelligence Index](docs/demo-aa.png)
+
 ## Quick start
 
 Requires Node.js 18 or newer.
@@ -39,6 +43,7 @@ Open the URL Vite prints (default http://localhost:5173).
 
 ## Using the chart
 
+- **Source toggle:** switch between CursorBench and Artificial Analysis.
 - **Legend chips:** click to show or hide a CLI. The number is how many points it has.
 - **Hover** a point to highlight its label, score, and cost.
 - **Click** a point to pin it. Click again to unpin.
@@ -53,6 +58,12 @@ CursorBench has no public API or data file, so the dev server scrapes the leader
    - **Same hash:** the cached rows are returned as-is, with no re-parsing.
    - **Different hash:** rows are re-parsed, filtered to the models above, and the cache is rewritten.
 4. If cursor.com is unreachable, the last cached rows are served instead.
+
+The Artificial Analysis source (`/api/bench?source=aa`, in [server/aa.mjs](server/aa.mjs)) works differently:
+
+1. It fetches the AA "All releases" page and picks the releases to show with the same model rule.
+2. It fetches each picked release page and reads that release's own per-effort entries. An effort without an index score or a cost per task is left out.
+3. Results are cached in `data/aa-cache.json` for 6 hours. If a release page fails, its last cached rows are kept.
 
 `data/` is git-ignored, so the cache is created on your first run.
 
@@ -70,12 +81,19 @@ CursorBench has no public API or data file, so the dev server scrapes the leader
 ## Project layout
 
 ```
-server/bench.mjs   Scraper, model filter, cache, and the /api/bench Vite plugin
-src/App.tsx        Page layout, legend chips, data loading
+server/bench.mjs   CursorBench scraper, model filter, cache, and the /api/bench Vite plugin
+server/aa.mjs      Artificial Analysis source (release pages, per-effort rows, cache)
+src/App.tsx        Page layout, source toggle, legend chips, data loading
 src/Chart.tsx      SVG scatter/line chart (score vs. cost)
 src/bench.ts       Shared types, provider colors, formatting helpers
 ```
 
 ## Changing which models are shown
 
-Edit `KEEP` and `GPT_LINES` in [server/bench.mjs](server/bench.mjs), then delete `data/bench-cache.json` so the next load rebuilds the cache.
+Edit `KEEP` and `GPT_LINES` in [server/bench.mjs](server/bench.mjs), then delete `data/bench-cache.json` and `data/aa-cache.json` so the next load rebuilds both caches.
+
+## Changelog
+
+- **1.2.0** (2026-10-01): Data source toggle between CursorBench and the Artificial Analysis Intelligence Index (`?source=aa`), so GPT-6.1 Sol, GPT-6 Astra and GPT-6 Luna can be seen before CursorBench lists them. AA rows are read per release and per effort, never borrowed from a neighbouring model.
+- **1.1.0** (2026-10-01): Each GPT line shows its newest listed version (GPT-6.1 Sol replaces GPT-6 Sol, which replaces GPT-5.6 Sol). Added Sonnet 5.5 and GPT-5.6 Luna.
+- **1.0.0** (2026-09-27): First release. CursorBench score vs. cost per task for five coding CLIs.

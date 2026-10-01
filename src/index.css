@@ -63,6 +63,36 @@ h1 {
   color: var(--muted);
 }
 
+.sources {
+  display: inline-flex;
+  gap: 2px;
+  margin-bottom: 12px;
+  padding: 3px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #fff;
+}
+
+.source {
+  padding: 5px 12px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  font: inherit;
+}
+
+.source.on {
+  background: #1a1a1a;
+  color: #fff;
+}
+
+.source:focus-visible {
+  outline: 2px solid #1a73c7;
+  outline-offset: 2px;
+}
+
 .legend {
   display: flex;
   flex-wrap: wrap;

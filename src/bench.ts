@@ -22,9 +22,31 @@ export const PROVIDERS: readonly {
   { id: "gemini", name: "Gemini", color: "#1a73c7" },
 ]
 
-export const SOURCE_URL = "https://cursor.com/cursorbench"
+export type SourceId = "cursorbench" | "aa"
 
-export const APP_VERSION = "1.1.0"
+export const SOURCES: Record<
+  SourceId,
+  { id: SourceId; name: string; eyebrow: string; url: string; unit: string; scoreName: string }
+> = {
+  cursorbench: {
+    id: "cursorbench",
+    name: "CursorBench",
+    eyebrow: "CursorBench 4.0",
+    url: "https://cursor.com/cursorbench",
+    unit: "%",
+    scoreName: "CursorBench 4.0 score",
+  },
+  aa: {
+    id: "aa",
+    name: "Artificial Analysis",
+    eyebrow: "AA Intelligence Index",
+    url: "https://artificialanalysis.ai/models/releases",
+    unit: "",
+    scoreName: "Artificial Analysis Intelligence Index",
+  },
+}
+
+export const APP_VERSION = "1.2.0"
 
 export function providerById(id: ProviderId) {
   const found = PROVIDERS.find((item) => item.id === id)
@@ -43,8 +65,8 @@ export function seriesColor(model: string, provider: ProviderId) {
   return providerById(provider).color
 }
 
-export function formatScore(score: number) {
-  return `${score.toFixed(1)}%`
+export function formatScore(score: number, unit = "%") {
+  return `${score.toFixed(1)}${unit}`
 }
 
 export function formatCost(cost: number) {

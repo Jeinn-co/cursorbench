@@ -23,6 +23,8 @@ type Label = {
 
 type Props = {
   rows: Row[]
+  unit: string
+  scoreName: string
   active: string | null
   onHover: (label: string | null) => void
   onPick: (label: string | null) => void
@@ -35,7 +37,7 @@ function effortIndex(effort: string | null) {
   return index === -1 ? 98 : index
 }
 
-export default function Chart({ rows, active, onHover, onPick }: Props) {
+export default function Chart({ rows, unit, scoreName, active, onHover, onPick }: Props) {
   const [narrow, setNarrow] = useState(
     () => typeof window !== "undefined" && window.matchMedia("(max-width: 720px)").matches,
   )
@@ -135,7 +137,7 @@ export default function Chart({ rows, active, onHover, onPick }: Props) {
       aria-labelledby="chart-desc"
     >
       <title id="chart-desc">
-        CursorBench 4.0 score vs. cost per task. Higher cost on the left, $0 on the right.
+        {scoreName} vs. cost per task. Higher cost on the left, $0 on the right.
       </title>
       <rect x={pad.l} y={pad.t} width={plotW} height={plotH} fill="#ffffff" />
       {yTicks.map((tick) => (
@@ -154,7 +156,8 @@ export default function Chart({ rows, active, onHover, onPick }: Props) {
             className="tick"
             opacity={focusY !== null && Math.abs(yOf(tick) - focusY) < 18 ? 0 : 1}
           >
-            {tick}%
+            {tick}
+            {unit}
           </text>
         </g>
       ))}
@@ -216,7 +219,7 @@ export default function Chart({ rows, active, onHover, onPick }: Props) {
                   tabIndex={0}
                   className="point-hit"
                   aria-pressed={on}
-                  aria-label={`${row.model} ${row.effort ?? ""}: ${formatScore(row.score)}, ${formatCost(row.cost)} per task`}
+                  aria-label={`${row.model} ${row.effort ?? ""}: ${formatScore(row.score, unit)}, ${formatCost(row.cost)} per task`}
                   transform={`translate(${xOf(row.cost).toFixed(1)} ${yOf(row.score).toFixed(1)})`}
                   onPointerEnter={() => onHover(row.label)}
                   onPointerLeave={() => onHover(null)}
@@ -285,7 +288,7 @@ export default function Chart({ rows, active, onHover, onPick }: Props) {
             fill={focusColor}
             className="cross-value"
           >
-            {formatScore(focus.score)}
+            {formatScore(focus.score, unit)}
           </text>
           <text
             x={focusX}

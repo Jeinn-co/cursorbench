@@ -2,6 +2,7 @@ import { createHash } from "node:crypto"
 import { mkdir, readFile, writeFile } from "node:fs/promises"
 import { dirname, join } from "node:path"
 import { fileURLToPath } from "node:url"
+import { loadAa } from "./aa.mjs"
 
 const PAGE = "https://cursor.com/cursorbench"
 const CACHE = join(dirname(fileURLToPath(import.meta.url)), "..", "data", "bench-cache.json")
@@ -27,7 +28,7 @@ const KEEP = new Set(["Opus 5.5", "Sonnet 5.5", "Grok 4.7", "Muse Spark 1.3", "G
 const GPT_LINES = ["Astra", "Sol", "Terra", "Luna"]
 const GPT_MODEL = /^GPT-(\d+(?:\.\d+)?) (Astra|Sol|Terra|Luna)$/
 
-function providerOf(model) {
+export function providerOf(model) {
   if (/^(Opus|Sonnet|Fable) /.test(model)) return "claude"
   if (GPT_MODEL.test(model)) return "codex"
   if (model.startsWith("Grok ")) return "grok"
@@ -48,18 +49,24 @@ function newerVersion(a, b) {
   return aMajor !== bMajor ? aMajor > bMajor : aMinor > bMinor
 }
 
-// Each GPT line (Astra, Sol, Terra, Luna) shows only its newest listed version,
-// so GPT-6.1 Sol replaces GPT-6 Sol, which replaces GPT-5.6 Sol.
-export function selectRows(rows) {
+// Which of the given model names are shown: the pinned models, plus each GPT line
+// (Astra, Sol, Terra, Luna) at its newest listed version, so GPT-6.1 Sol replaces
+// GPT-6 Sol, which replaces GPT-5.6 Sol. Shared by the CursorBench and AA sources.
+export function shownModels(models) {
   const newest = new Map()
-  for (const { model } of rows) {
+  for (const model of models) {
     const match = model.match(GPT_MODEL)
     if (!match || !GPT_LINES.includes(match[2])) continue
     const current = newest.get(match[2])
     if (!current || newerVersion(match[1], current.version)) newest.set(match[2], { version: match[1], model })
   }
-  const gpt = new Set([...newest.values()].map((entry) => entry.model))
-  return rows.filter((row) => KEEP.has(row.model) || gpt.has(row.model))
+  const gpt = [...newest.values()].map((entry) => entry.model)
+  return new Set([...models.filter((model) => KEEP.has(model)), ...gpt])
+}
+
+export function selectRows(rows) {
+  const shown = shownModels(rows.map((row) => row.model))
+  return rows.filter((row) => shown.has(row.model))
 }
 
 export function rowsFromHtml(html) {
@@ -144,7 +151,9 @@ export function benchPlugin() {
   const handle = (req, res, next) => {
     const url = req.url ?? ""
     if (!url.startsWith("/api/bench")) return next()
-    loadBench().then(
+    const source = new URL(url, "http://localhost").searchParams.get("source")
+    const load = source === "aa" ? loadAa : loadBench
+    load().then(
       (payload) => send(res, 200, payload),
       (error) => send(res, 502, { error: error instanceof Error ? error.message : "fetch failed" }),
     )
